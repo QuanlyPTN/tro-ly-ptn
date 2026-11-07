@@ -3,7 +3,7 @@
   const L = window.Logic;
   const { esc, ngayGio, moHop, xacNhan, thongBao } = window.UI;
   const MOI_TRANG = 20;
-  const laAdmin = () => Store.phien.vaiTro === 'admin';
+  const laAdmin = () => Store.coQuyen('xoa_ngan_hang');
   const nh = () => (App.ui.nh ||= { bank: null, dangTai: false, loai: 'tn', tim: '', file: '', bo: '', chuDe: '', thieu: false, trang: 0 });
 
   async function taiBank() {

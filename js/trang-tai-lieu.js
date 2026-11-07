@@ -3,7 +3,7 @@
   const L = window.Logic;
   const { esc, ngay, ngayDu, moHop, xacNhan, thongBao, vanBan } = window.UI;
   const toi = () => Store.troLy(Store.phien.mssv);
-  const laAdmin = () => Store.phien.vaiTro === 'admin';
+  const laAdmin = () => Store.coQuyen('noi_dung');
   const PHAN = [
     ['tuyen', 'Phần 1. Kiến thức nền', 'Bắt buộc đọc trước khi làm khảo sát tuyển.'],
     ['thu_viec', 'Phần 2. Nghiệp vụ trợ lý', 'Dùng trong 2 tuần thử việc và các bài kiểm tra thử việc.']
@@ -186,7 +186,7 @@
       const st = Store.state;
       const nut = (act, id, ten) => (laAdmin() ? `<button type="button" class="nut nut-phu nut-nho" data-act="${act}" data-id="${esc(id)}">${ten}</button>` : '');
       return `
-        ${laAdmin() ? '' : '<section class="the the-nhat"><p>Chỉ Admin được sửa nội dung trang này.</p></section>'}
+        ${laAdmin() ? '' : '<section class="the the-nhat"><p>Bạn xem được nội dung. Muốn sửa, nhờ Admin giao quyền.</p></section>'}
         ${PHAN.map(([phan, ten]) => `
           <section class="the">
             <div class="hang-dau"><h2>${esc(ten)}</h2>${laAdmin() ? `<button type="button" class="nut nut-nho" data-act="sua-tai-lieu" data-id="" data-phan="${phan}">Thêm bài</button>` : ''}</div>
@@ -288,7 +288,7 @@
             ${ds.length ? `<p class="phu">${ds.map((x) => esc(ten(x.mssv))).join(', ')}</p>` : ''}
             <div class="hang-nut">
               <button type="button" class="nut ${b.dangMo ? 'nut-phu' : 'nut-xanh'} nut-nho" data-act="mo-dong-buoi" data-id="${esc(b.id)}">${b.dangMo ? 'Đóng bài' : 'Mở bài, tạo mã'}</button>
-              ${laAdmin() && !ds.length ? `<button type="button" class="nut-chu" data-act="xoa-buoi" data-id="${esc(b.id)}">Xóa</button>` : ''}
+              ${Store.coQuyen('tap_huan') && !ds.length ? `<button type="button" class="nut-chu" data-act="xoa-buoi" data-id="${esc(b.id)}">Xóa</button>` : ''}
             </div>
           </li>`;
         }).join('')}</ul>` : '<p class="phu">Chưa có buổi khảo sát nào.</p>'}

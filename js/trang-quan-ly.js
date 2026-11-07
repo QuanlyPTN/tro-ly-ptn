@@ -225,7 +225,7 @@
         ${choDuyet ? `<section class="the the-nhat"><p><strong>${choDuyet} đơn đăng ký mới</strong> đang chờ xét. Bấm vào tên để xem kết quả khảo sát và duyệt.</p></section>` : ''}
         ${st.dangKyNhanTin.length ? `<section class="the"><h2>Chờ tin đợt tuyển (${st.dangKyNhanTin.length})</h2><p class="phu">${esc(st.dangKyNhanTin.map((d) => `${d.hoTen} (${d.sdt})`).join(', '))}</p></section>` : ''}
         <section class="the">
-          <div class="hang-dau"><h2>Trợ lý (${ds.length})</h2>${Store.phien.vaiTro === 'admin' ? '<button type="button" class="nut nut-nho" data-act="them-tro-ly">Thêm trợ lý</button>' : ''}</div>
+          <div class="hang-dau"><h2>Trợ lý (${ds.length})</h2>${Store.coQuyen('them_tro_ly') ? '<button type="button" class="nut nut-nho" data-act="them-tro-ly">Thêm trợ lý</button>' : ''}</div>
           <div class="bo-loc">
             <input type="search" placeholder="Tìm tên hoặc MSSV" aria-label="Tìm tên hoặc MSSV" value="${esc(loc.tim)}" data-doi="doi-loc" data-loc="tim" />
             <select data-doi="doi-loc" data-loc="hocKy" aria-label="Học kỳ">${st.hocKy.map((k) => `<option value="${esc(k.id)}"${k.id === loc.hocKy ? ' selected' : ''}>${esc(k.ten)}</option>`).join('')}</select>
@@ -357,7 +357,7 @@
       ${t.trangThai === 'cho_duyet' ? `<p class="phu">Lộ trình: ${esc(App.moTaLoTrinh(t))}.</p>` : ''}
       <h3>Bài kiểm tra</h3>
       ${bai.length ? `<ul class="ds-gon">${bai.map((b) => `<li><span>${esc(st.dotKiemTra.find((d) => d.id === b.dotId).ten)}: ${b.diemTN ?? '–'}/${b.de.tracNghiem.length} câu</span>${nhan(UI.KET_QUA_BAI, b.ketQua)}</li>`).join('')}</ul>` : '<p class="phu">Chưa làm bài nào.</p>'}
-      <div class="hang-nut">${nutTrangThai(t)}${Store.phien.vaiTro === 'admin' ? `<button type="button" class="nut nut-phu nut-nho" data-act="cap-ma-moi" data-mssv="${esc(t.mssv)}">Cấp mã mới</button>` : ''}</div>`);
+      <div class="hang-nut">${nutTrangThai(t)}${Store.coQuyen('them_tro_ly') ? `<button type="button" class="nut nut-phu nut-nho" data-act="cap-ma-moi" data-mssv="${esc(t.mssv)}">Cấp mã mới</button>` : ''}</div>`);
   };
 
   App.act['doi-trang-thai'] = async (el) => {
@@ -388,7 +388,7 @@
       const loai = App.ui.loaiNeNep || 'loi_nhe';
       const dangTruc = st.troLy.filter((t) => ['thu_viec', 'dang_hoat_dong', 'tam_nghi'].includes(t.trangThai));
       const ds = st.soNeNep.slice().sort((a, b) => b.ngay.localeCompare(a.ngay));
-      const admin = Store.phien.vaiTro === 'admin';
+      const admin = Store.coQuyen('quyet_mat');
       return `
         <section class="the">
           <h2>Ghi nhanh</h2>
@@ -440,7 +440,7 @@
     if (!dx) return `<button type="button" class="nut nut-phu nut-nho" data-act="mo-phan-hoi" data-mssv="${esc(t.mssv)}">Mở phản hồi ${Store.state.caiDat.ngayPhanHoi} ngày</button>`;
     const duocQuyet = dx.phanHoi || Store.now() > dx.hanPhanHoi;
     const trangThai = dx.phanHoi ? `Phản hồi: ${esc(dx.phanHoi)}` : `Chờ phản hồi đến ${ngayGio(dx.hanPhanHoi)}`;
-    if (Store.phien.vaiTro !== 'admin') return `<span class="phu">${trangThai}. Admin quyết định.</span>`;
+    if (!Store.coQuyen('quyet_mat')) return `<span class="phu">${trangThai}. Người có quyền quyết định sẽ chốt.</span>`;
     return `<span class="phu">${trangThai}</span>
       ${duocQuyet ? `<span class="hang-nut">
         <button type="button" class="nut nut-nho" data-act="quyet-mat" data-id="${esc(dx.id)}" data-kq="mat">Mất tư cách</button>

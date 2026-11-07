@@ -389,6 +389,16 @@
       return { id: tk?.id, ten: tk?.ten };
     },
 
+    taiKhoanDangDung() {
+      const { vaiTro, taiKhoanId } = this.phien;
+      if (vaiTro === 'tro_ly') return null;
+      return this.state.taiKhoan.find((t) => t.id === (vaiTro === 'admin' ? 'admin' : taiKhoanId)) || { vaiTro };
+    },
+
+    coQuyen(ma) {
+      return L.coQuyen(this.taiKhoanDangDung(), ma);
+    },
+
     /* Luôn lưu bản sao trong mục Thông báo (mục 5.1); Web Push cần máy chủ nên chưa gửi ra ngoài. */
     guiThongBao({ tieuDe, noiDung = '', loai = 'chung', nguoiNhan }) {
       this.state.thongBao.push({ id: taoId('tb'), tieuDe, noiDung, loai, nguoiNhan, daDoc: [], taoBoi: this.nguoiDung().ten, luc: this.now() });

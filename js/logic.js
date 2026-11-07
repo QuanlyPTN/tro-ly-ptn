@@ -648,7 +648,40 @@
     return { cauHoi, tuLuan, loi };
   }
 
+  /* ---------- Phân quyền tài khoản quản lý ----------
+     trang: mục menu được mở; tap: dữ liệu được ghi; xoa: dữ liệu được xóa. Admin luôn có mọi quyền.
+     Tài khoản cũ chưa được phân quyền giữ đúng phần việc trước đây (QUYEN_MAC_DINH). */
+  const QUYEN = [
+    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng', trang: ['bang-ca'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao'] },
+    { ma: 'tro_ly', nhom: 'Vận hành', ten: 'Danh sách trợ lý: xem hồ sơ, đổi trạng thái, xuất Excel', trang: ['danh-sach'], tap: ['troLy'] },
+    { ma: 'them_tro_ly', nhom: 'Vận hành', ten: 'Thêm trợ lý và cấp mã vào web', trang: ['danh-sach'], tap: ['troLy'] },
+    { ma: 'duyet_don', nhom: 'Vận hành', ten: 'Duyệt đơn: xin vắng, đổi ca, chuyển máy, PTN hủy ca', trang: ['duyet-don'], tap: ['donVang', 'doiCa', 'deNghi', 'caTruc', 'troLy'] },
+    { ma: 'ne_nep', nhom: 'Vận hành', ten: 'Ghi sổ nề nếp, xem cảnh báo, mở phản hồi', trang: ['so-ne-nep', 'canh-bao'], tap: ['soNeNep', 'deXuatMat'] },
+    { ma: 'quyet_mat', nhom: 'Vận hành', ten: 'Quyết định mất tư cách, xóa ghi nhận nề nếp', trang: ['so-ne-nep', 'canh-bao'], tap: ['deXuatMat', 'troLy'], xoa: ['soNeNep'] },
+    { ma: 'thong_bao', nhom: 'Việc và tin', ten: 'Soạn thông báo', trang: ['thong-bao-ql'], tap: ['dangKyNhanTin'] },
+    { ma: 'viec', nhom: 'Việc và tin', ten: 'Việc ngoài ca: tạo việc, chốt người, xác nhận', trang: ['viec-ngoai-ca'], tap: ['viec', 'thamGiaViec', 'soNeNep'] },
+    { ma: 'tap_huan', nhom: 'Tập huấn', ten: 'Buổi khảo sát, chấm và mở lại bài', trang: ['quan-ly-tap-huan'], tap: ['buoiKhaoSat', 'baiLam'], xoa: ['buoiKhaoSat'] },
+    { ma: 'ngan_hang', nhom: 'Tập huấn', ten: 'Ngân hàng câu hỏi: xem, nạp file, sửa câu', trang: ['ngan-hang'] },
+    { ma: 'xoa_ngan_hang', nhom: 'Tập huấn', ten: 'Xóa file và câu hỏi trong ngân hàng', trang: ['ngan-hang'] },
+    { ma: 'noi_dung', nhom: 'Tập huấn', ten: 'Sửa tài liệu tập huấn và nội quy', trang: [], tap: ['taiLieu', 'noiQuy'], xoa: ['taiLieu', 'noiQuy'] },
+    { ma: 'cuoi_ky', nhom: 'Tập huấn', ten: 'Đánh giá cuối kỳ', trang: ['cuoi-ky'], tap: ['danhGia'] },
+    { ma: 'chot_xep_loai', nhom: 'Tập huấn', ten: 'Chốt xếp loại học kỳ', trang: ['cuoi-ky'], tap: ['xepLoaiKy'], xoa: ['xepLoaiKy'] },
+    { ma: 'cai_dat', nhom: 'Hệ thống', ten: 'Cài đặt: đợt tuyển, học kỳ, mốc, đề, checklist, danh mục', trang: ['cai-dat'], tap: ['hocKy', 'dotTuyen', 'dotKiemTra', 'checklistMau'], xoa: ['checklistMau'] },
+    { ma: 'nhat_ky', nhom: 'Hệ thống', ten: 'Xem nhật ký thao tác', trang: ['nhat-ky'] }
+  ];
+  const QUYEN_MAC_DINH = ['ca_truc', 'tro_ly', 'duyet_don', 'ne_nep', 'thong_bao', 'viec', 'tap_huan', 'ngan_hang', 'cuoi_ky'];
+
+  function quyenCua(tk) {
+    if (!tk) return [];
+    if (tk.vaiTro === 'admin') return QUYEN.map((q) => q.ma);
+    const co = Array.isArray(tk.quyen) ? tk.quyen : QUYEN_MAC_DINH;
+    return QUYEN.map((q) => q.ma).filter((ma) => co.includes(ma));
+  }
+  const coQuyen = (tk, ma) => quyenCua(tk).includes(ma);
+  const duocGhi = (tk, tap, loai = 'tap') => QUYEN.some((q) => (q[loai] || []).includes(tap) && coQuyen(tk, q.ma));
+
   return {
+    QUYEN, QUYEN_MAC_DINH, quyenCua, coQuyen, duocGhi,
     PHUT, GIO, NGAY, CAI_DAT_MAC_DINH, DOT_KIEM_TRA_MAC_DINH, CHECKLIST_MAC_DINH, DANH_MUC_LOI_MAC_DINH, CA_GIU_CHO,
     phut, hhmm, ngayKey, docNgay, mocGio, congNgay, dauTuan, hanKhoaTuan, tuanThu, hocKyHienTai, dotTuyenMo,
     soNguoiTrongKhung, kiemTraDangKyCa, loaiHuy, mucChecklist, checklistXong, danhGiaLuot,

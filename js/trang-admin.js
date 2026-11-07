@@ -1,6 +1,13 @@
 /* Phần Admin: tài khoản quản lý, cài đặt, nhật ký (mục 2, 8). */
 (function () {
   const { esc, ngayGio, nhan, xacNhan, thongBao } = window.UI;
+  const L = window.Logic;
+
+  const tomTatQuyen = (t) => {
+    const co = L.quyenCua(t);
+    if (!co.length) return 'Chưa được giao việc nào, chỉ xem Tổng quan.';
+    return `${co.length}/${L.QUYEN.length} quyền: ${L.QUYEN.filter((q) => co.includes(q.ma)).map((q) => q.ten.split(':')[0]).join(', ')}.`;
+  };
 
   App.trang['tai-khoan'] = {
     ten: 'Tài khoản',
@@ -11,9 +18,13 @@
         <section class="the">
           <h2>Tài khoản quản lý</h2>
           ${Store.tuXa ? '' : '<p class="phu">Bản thử trên máy không dùng mật khẩu.</p>'}
+          <p class="phu">Bấm Phân quyền để chọn việc mỗi người được làm. Chỉ Admin cấp tài khoản và phân quyền.</p>
           <ul class="ds-gon">${ds.map((t) => `
-            <li><span><strong>${esc(t.ten)}</strong> · ${esc(t.email)} ${t.khoa ? '<span class="nhan nhan-do">Đã khóa</span>' : ''}</span>
-              <button type="button" class="nut nut-phu nut-nho" data-act="khoa-tai-khoan" data-id="${esc(t.id)}">${t.khoa ? 'Mở khóa' : 'Khóa'}</button></li>`).join('')}</ul>
+            <li><span><strong>${esc(t.ten)}</strong> · ${esc(t.email)} ${t.khoa ? '<span class="nhan nhan-do">Đã khóa</span>' : ''}<br /><small>${esc(tomTatQuyen(t))}</small></span>
+              <span class="hang-nut">
+                <button type="button" class="nut nut-nho" data-act="phan-quyen" data-id="${esc(t.id)}">Phân quyền</button>
+                <button type="button" class="nut nut-phu nut-nho" data-act="khoa-tai-khoan" data-id="${esc(t.id)}">${t.khoa ? 'Mở khóa' : 'Khóa'}</button>
+              </span></li>`).join('')}</ul>
           <form data-form="them-tai-khoan" class="luoi-form">
             <label>Họ tên <input name="ten" required /></label>
             <label>Email <input name="email" type="email" required /></label>
@@ -50,6 +61,36 @@
     }
     Store.ghiNhatKy(t.khoa ? 'Khóa tài khoản' : 'Mở khóa tài khoản', t.email);
     App.xong();
+  };
+
+  App.act['phan-quyen'] = (el) => {
+    const t = Store.state.taiKhoan.find((x) => x.id === el.dataset.id);
+    const co = L.quyenCua(t);
+    const nhom = [...new Set(L.QUYEN.map((q) => q.nhom))];
+    UI.moHop(`Phân quyền: ${t.ten}`, `
+      <p class="phu">Ai cũng xem được Tổng quan và nội dung tài liệu. Tick việc người này được làm; bỏ tick thì mục đó ẩn khỏi menu và máy chủ từ chối.</p>
+      <form data-form="luu-quyen" data-id="${esc(t.id)}">
+        ${nhom.map((n) => `<fieldset><legend>${esc(n)}</legend>
+          ${L.QUYEN.filter((q) => q.nhom === n).map((q) => `<label class="o-chon"><input type="checkbox" name="q_${q.ma}"${co.includes(q.ma) ? ' checked' : ''} /><span>${esc(q.ten)}</span></label>`).join('')}
+        </fieldset>`).join('')}
+        <div class="hang-nut canh-phai">
+          <button type="button" class="nut nut-phu" data-act="chon-het-quyen">Chọn tất cả</button>
+          <button class="nut">Lưu phân quyền</button>
+        </div>
+      </form>`);
+  };
+
+  App.act['chon-het-quyen'] = (el) => {
+    const o = [...el.form.querySelectorAll('input[type=checkbox]')];
+    const het = o.every((x) => x.checked);
+    o.forEach((x) => (x.checked = !het));
+  };
+
+  App.form['luu-quyen'] = (f, el) => {
+    const t = Store.state.taiKhoan.find((x) => x.id === el.dataset.id);
+    t.quyen = L.QUYEN.map((q) => q.ma).filter((ma) => `q_${ma}` in f);
+    Store.ghiNhatKy('Phân quyền', t.email, t.quyen.length ? L.QUYEN.filter((q) => t.quyen.includes(q.ma)).map((q) => q.ten.split(':')[0]).join(', ') : 'Không có quyền nào');
+    App.xong(`Đã lưu phân quyền cho ${t.ten}.`);
   };
 
   const O_SO = [

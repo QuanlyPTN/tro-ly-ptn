@@ -41,8 +41,10 @@
         if (tl.trangThai === 'cho_duyet') return ['tap-huan', 'tai-lieu', 'noi-quy', 'thong-bao', 'thong-tin'];
         return ['thong-tin', 'thong-bao', 'tien-do'];
       }
-      const quanLy = ['tong-quan', 'bang-ca', 'danh-sach', 'duyet-don', 'so-ne-nep', 'thong-bao-ql', 'viec-ngoai-ca', 'canh-bao', 'quan-ly-tap-huan', 'ngan-hang', 'noi-dung', 'cuoi-ky'];
-      return vaiTro === 'admin' ? [...quanLy, 'tai-khoan', 'cai-dat', 'nhat-ky'] : quanLy;
+      const duocMo = new Set(L.QUYEN.filter((q) => Store.coQuyen(q.ma)).flatMap((q) => q.trang));
+      const quanLy = ['tong-quan', 'bang-ca', 'danh-sach', 'duyet-don', 'so-ne-nep', 'thong-bao-ql', 'viec-ngoai-ca', 'canh-bao', 'quan-ly-tap-huan', 'ngan-hang', 'noi-dung', 'cuoi-ky', 'cai-dat', 'nhat-ky']
+        .filter((id) => ['tong-quan', 'noi-dung'].includes(id) || duocMo.has(id));
+      return vaiTro === 'admin' ? [...quanLy, 'tai-khoan'] : quanLy;
     },
 
     /* nen = true: vẽ lại do dữ liệu nền về. Phần không đổi thì giữ nguyên, nếu không cú bấm rơi đúng lúc thay DOM sẽ bị mất. */

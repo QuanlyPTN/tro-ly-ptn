@@ -28,7 +28,7 @@
       const st = Store.state;
       const hk = hocKyDangXem();
       const ds = danhSach(hk);
-      const admin = Store.phien.vaiTro === 'admin';
+      const admin = Store.coQuyen('chot_xep_loai');
       const conThieu = ds.filter((x) => x.tb === null).length;
       return `
         <section class="the">
