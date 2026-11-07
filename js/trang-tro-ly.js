@@ -5,16 +5,35 @@
   const toi = () => Store.troLy(Store.phien.mssv);
   const homNay = () => L.ngayKey(new Date(Store.now()));
 
-  /* ---------- Trợ lý vào app bằng mã ---------- */
+  const oHoSo = (loai) => `
+    <label>Họ tên <input name="hoTen" required autocomplete="name" /></label>
+    <label>Ngày sinh <input name="ngaySinh" type="date" required /></label>
+    <label>MSSV <input name="mssv" required pattern="[0-9A-Za-z]{6,15}" title="6 đến 15 ký tự chữ hoặc số" /></label>
+    <label>Lớp <input name="lop" required /></label>
+    <label>Ngành <input name="nganh" required /></label>
+    <label>Năm dự kiến ra trường <input name="namRaTruong" type="number" min="2026" max="2040" required /></label>
+    <label>Số điện thoại <input name="sdt" type="tel" required pattern="[0-9]{9,11}" title="9 đến 11 chữ số" /></label>
+    <label>Email <input name="email" type="email" required /></label>
+    <p id="loi-dang-ky-${loai}" class="loi rong-het" role="alert" hidden></p>`;
+
+  /* ---------- Trợ lý đang làm: tự gửi yêu cầu, hoặc nhập mã PTN cấp ---------- */
   const theDaLaTroLy = () => `
     <section class="the">
-      <h2>Bạn đã là trợ lý?</h2>
-      <p class="phu">Nhập mã do PTN cấp. Đổi điện thoại thì xin PTN mã mới.</p>
-      <form data-form="kich-hoat" class="hang-form">
-        <input name="ma" aria-label="Mã trợ lý" placeholder="Mã trợ lý" autocomplete="off" autocapitalize="characters" required />
-        <button class="nut">Vào</button>
+      <h2>Bạn đang là trợ lý PTN?</h2>
+      <p class="phu">Gửi yêu cầu để PTN xác nhận. Xác nhận xong, máy này vào thẳng phần trợ lý, không phải làm khảo sát tuyển.</p>
+      <form data-form="dang-ky" data-loai="cu" class="luoi-form">
+        ${oHoSo('cu')}
+        <div class="hang-nut rong-het"><button class="nut">Gửi yêu cầu xác nhận</button></div>
       </form>
-      <p id="loi-kich-hoat" class="loi" role="alert" hidden></p>
+      <details>
+        <summary>Không đăng ký được? Nhập mã PTN cấp</summary>
+        <p class="phu">Liên hệ quản lý PTN để được cấp mã. Đổi điện thoại cũng xin mã mới như vậy.</p>
+        <form data-form="kich-hoat" class="hang-form">
+          <input name="ma" aria-label="Mã trợ lý" placeholder="Mã trợ lý" autocomplete="off" autocapitalize="characters" required />
+          <button class="nut">Vào</button>
+        </form>
+        <p id="loi-kich-hoat" class="loi" role="alert" hidden></p>
+      </details>
     </section>`;
 
   App.form['kich-hoat'] = async (f) => {
@@ -42,7 +61,8 @@
         return `
           ${theDaLaTroLy()}
           <section class="the">
-            <h2>Chưa đến đợt tuyển</h2>
+            <h2>Muốn làm trợ lý mới?</h2>
+            <p class="phu">Hiện chưa đến đợt tuyển.</p>
             <p class="phu">Để lại tên và số điện thoại, PTN sẽ báo khi mở đợt tuyển mới.</p>
             <form data-form="nhan-tin" class="luoi-form">
               <label>Họ tên <input name="hoTen" required /></label>
@@ -54,18 +74,10 @@
       return `
         ${theDaLaTroLy()}
         <section class="the">
-          <h2>${esc(dot.ten)}</h2>
+          <h2>Đăng ký làm trợ lý mới: ${esc(dot.ten)}</h2>
           <p class="phu">Nhận đăng ký đến ${ngayDu(dot.denNgay)}. Thông tin lưu luôn, lần sau không phải nhập lại. Sau khi gửi, bạn làm bài khảo sát tuyển.</p>
-          <form data-form="dang-ky" class="luoi-form">
-            <label>Họ tên <input name="hoTen" required autocomplete="name" /></label>
-            <label>Ngày sinh <input name="ngaySinh" type="date" required /></label>
-            <label>MSSV <input name="mssv" required pattern="[0-9A-Za-z]{6,15}" title="6 đến 15 ký tự chữ hoặc số" /></label>
-            <label>Lớp <input name="lop" required /></label>
-            <label>Ngành <input name="nganh" required /></label>
-            <label>Năm dự kiến ra trường <input name="namRaTruong" type="number" min="2026" max="2040" required /></label>
-            <label>Số điện thoại <input name="sdt" type="tel" required pattern="[0-9]{9,11}" title="9 đến 11 chữ số" /></label>
-            <label>Email <input name="email" type="email" required /></label>
-            <p id="loi-dang-ky" class="loi rong-het" role="alert" hidden></p>
+          <form data-form="dang-ky" data-loai="moi" class="luoi-form">
+            ${oHoSo('moi')}
             <div class="hang-nut rong-het"><button class="nut">Gửi đăng ký</button></div>
           </form>
         </section>`;
@@ -78,9 +90,10 @@
     App.xong('Đã ghi nhận. PTN sẽ báo khi mở đợt tuyển.');
   };
 
-  App.form['dang-ky'] = async (f) => {
+  App.form['dang-ky'] = async (f, el) => {
+    const cu = el.dataset.loai === 'cu';
     const mssv = f.mssv.trim();
-    const loi = document.getElementById('loi-dang-ky');
+    const loi = document.getElementById(`loi-dang-ky-${el.dataset.loai}`);
     let tinhTrang;
     try {
       tinhTrang = await Store.kiemTraMssv(mssv);
@@ -89,7 +102,7 @@
     }
     if (tinhTrang === 'cho_kich_hoat') {
       loi.hidden = false;
-      loi.textContent = 'MSSV này đã có trong danh sách. Nhập mã PTN cấp ở khung "Bạn đã là trợ lý?" phía trên.';
+      loi.textContent = 'MSSV này đã được PTN thêm sẵn. Bấm "Không đăng ký được? Nhập mã PTN cấp" và nhập mã, chưa có mã thì liên hệ quản lý PTN.';
       return;
     }
     if (tinhTrang !== 'chua_co') {
@@ -108,13 +121,14 @@
     }
     Store.state.troLy.push({
       mssv, hoTen: f.hoTen.trim(), ngaySinh: f.ngaySinh, lop: f.lop.trim(), nganh: f.nganh.trim(), namRaTruong: Number(f.namRaTruong),
-      sdt: f.sdt.trim(), email: f.email.trim(), maMay: Store.maMay(), trangThai: 'cho_duyet', ngayDangKy: homNay(), ngayDuyet: null, nguoiDuyet: null, ngayChinhThuc: null
+      sdt: f.sdt.trim(), email: f.email.trim(), maMay: Store.maMay(), trangThai: cu ? 'cho_xac_nhan' : 'cho_duyet', loaiDangKy: cu ? 'tro_ly_cu' : 'ung_vien',
+      ngayDangKy: homNay(), ngayDuyet: null, nguoiDuyet: null, ngayChinhThuc: null
     });
     Store.phien.mssv = mssv;
     Store.luuPhien();
-    Store.ghiNhatKy('Đăng ký trợ lý', mssv);
-    App.ui.trang = 'tap-huan';
-    App.xong('Đã gửi đăng ký. Mời bạn làm bài khảo sát tuyển.');
+    Store.ghiNhatKy(cu ? 'Trợ lý xin xác nhận' : 'Đăng ký trợ lý', mssv);
+    App.ui.trang = cu ? 'thong-tin' : 'tap-huan';
+    App.xong(cu ? 'Đã gửi yêu cầu. PTN xác nhận xong, web tự mở phần trợ lý.' : 'Đã gửi đăng ký. Mời bạn làm bài khảo sát tuyển.');
   };
 
   /* ---------- Thông tin của tôi ---------- */
@@ -134,6 +148,7 @@
       return `
         <section class="the">
           <div class="hang-dau"><h2>${esc(t.hoTen)}</h2>${nhan(UI.TRANG_THAI_TRO_LY, t.trangThai)}</div>
+          ${t.trangThai === 'cho_xac_nhan' ? '<p class="phu">Yêu cầu đang chờ PTN xác nhận. Xác nhận xong, web tự mở phần trợ lý. Chờ lâu thì liên hệ quản lý PTN.</p>' : ''}
           ${t.trangThai === 'cho_duyet' ? '<p class="phu">Đơn đang chờ PTN xét. Kết quả hiện ở đây sau khi quản lý duyệt. Đăng ký lịch trực mở sau khi được PTN duyệt.</p>' : ''}
           <dl class="luoi-thong-tin">
             ${dong('MSSV', t.mssv)}${dong('Ngày sinh', ngayDu(t.ngaySinh))}${dong('Lớp', t.lop)}${dong('Ngành', t.nganh)}

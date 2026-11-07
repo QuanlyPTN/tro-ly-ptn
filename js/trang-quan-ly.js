@@ -332,6 +332,7 @@
     const nut = (ten, moi, kieu = 'nut-phu') => `<button type="button" class="nut ${kieu} nut-nho" data-act="doi-trang-thai" data-mssv="${esc(t.mssv)}" data-moi="${moi}">${ten}</button>`;
     const theo = {
       cho_duyet: nut('Duyệt vào thử việc', 'thu_viec', 'nut-xanh') + nut('Từ chối', 'tu_choi'),
+      cho_xac_nhan: nut('Xác nhận: đang hoạt động', 'dang_hoat_dong', 'nut-xanh') + nut('Xác nhận: thử việc', 'thu_viec') + nut('Không phải trợ lý', 'tu_choi'),
       thu_viec: nut('Đạt thử việc', 'dang_hoat_dong', 'nut-xanh') + nut('Không đạt, cho nghỉ', 'da_nghi'),
       dang_hoat_dong: nut('Tạm nghỉ', 'tam_nghi') + nut('Đã nghỉ', 'da_nghi') + nut('Đã ra trường', 'da_ra_truong'),
       tam_nghi: nut('Hoạt động lại', 'dang_hoat_dong', 'nut-xanh') + nut('Đã nghỉ', 'da_nghi')
@@ -371,7 +372,7 @@
     App.hoiLyDo(`Chuyển sang "${ten}"`, t.hoTen, (lyDo) => {
       const cu = t.trangThai;
       t.trangThai = moi;
-      if (cu === 'cho_duyet') Object.assign(t, { ngayDuyet: homNay(), nguoiDuyet: Store.nguoiDung().id });
+      if (['cho_duyet', 'cho_xac_nhan'].includes(cu)) Object.assign(t, { ngayDuyet: homNay(), nguoiDuyet: Store.nguoiDung().id });
       if (moi === 'dang_hoat_dong' && !t.ngayChinhThuc) t.ngayChinhThuc = homNay();
       Store.ghiNhatKy('Đổi trạng thái trợ lý', t.mssv, `${UI.TRANG_THAI_TRO_LY[cu][0]} → ${ten}${lyDo ? `: ${lyDo}` : ''}`);
       Store.guiThongBao({ tieuDe: `Trạng thái của bạn: ${ten}`, noiDung: lyDo, nguoiNhan: [t.mssv] });

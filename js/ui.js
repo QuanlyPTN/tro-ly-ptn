@@ -84,6 +84,7 @@
 
   const TRANG_THAI_TRO_LY = {
     cho_duyet: ['Chờ duyệt', 'vang'],
+    cho_xac_nhan: ['Chờ xác nhận', 'vang'],
     thu_viec: ['Thử việc', 'tim'],
     dang_hoat_dong: ['Đang hoạt động', 'luc'],
     tam_nghi: ['Tạm nghỉ', 'xam'],

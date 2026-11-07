@@ -17,7 +17,7 @@
     'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực cho tuần sau', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
     'thong-bao': 'Tin từ PTN và nhắc việc', 'xin-vang': 'Gửi đơn và theo dõi duyệt', 'tap-huan': 'Bài kiểm tra và ôn luyện', 'tai-lieu': 'Đọc hiểu trước khi làm bài',
     'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Nhập mã hoặc đăng ký mới', 'dang-nhap': 'Dành cho quản lý và Admin',
-    'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xin vắng, đổi ca, chuyển máy',
+    'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xác nhận trợ lý, xin vắng, đổi ca, chuyển máy',
     'so-ne-nep': 'Ghi nhận lỗi và điểm tốt', 'canh-bao': 'Web đề xuất, quản lý chốt', 'viec-ngoai-ca': 'Việc đột xuất, việc giao và thống kê', 'thong-bao-ql': 'Soạn tin và xem ai đã đọc',
     'quan-ly-tap-huan': 'Buổi khảo sát, chấm bài, mở lại bài', 'ngan-hang': 'File câu hỏi, xem và sửa từng câu', 'noi-dung': 'Tài liệu tập huấn và nội quy',
     'cuoi-ky': 'Đánh giá và xếp loại học kỳ', 'tai-khoan': 'Tài khoản quản lý', 'cai-dat': 'Đợt tuyển, mốc, danh mục', 'nhat-ky': 'Ai làm gì, lúc nào'
@@ -39,6 +39,7 @@
         if (!tl) return ['dang-ky'];
         if (['thu_viec', 'dang_hoat_dong'].includes(tl.trangThai)) return ['trang-chu', 'ca-hom-nay', 'lich-truc', 'thong-bao', 'viec-cua-toi', 'tap-huan', 'tai-lieu', 'noi-quy', 'tien-do', 'xin-vang', 'thong-tin'];
         if (tl.trangThai === 'cho_duyet') return ['tap-huan', 'tai-lieu', 'noi-quy', 'thong-bao', 'thong-tin'];
+        if (tl.trangThai === 'cho_xac_nhan') return ['thong-tin', 'thong-bao', 'noi-quy'];
         return ['thong-tin', 'thong-bao', 'tien-do'];
       }
       const duocMo = new Set(L.QUYEN.filter((q) => Store.coQuyen(q.ma)).flatMap((q) => q.trang));

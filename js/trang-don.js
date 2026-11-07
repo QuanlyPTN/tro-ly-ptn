@@ -1,7 +1,7 @@
 /* Đơn từ: xin vắng, đổi ca, chuyển máy, PTN hủy ca hàng loạt; trang Duyệt đơn của quản lý (mục 3.2, 2, 8). */
 (function () {
   const L = window.Logic;
-  const { esc, ngay, ngayGio, nhan, xacNhan, thongBao } = window.UI;
+  const { esc, ngay, ngayDu, ngayGio, nhan, xacNhan, thongBao } = window.UI;
   const toi = () => Store.troLy(Store.phien.mssv);
   const tenSV = (mssv) => Store.troLy(mssv)?.hoTen || mssv;
   const caCua = (id) => Store.state.caTruc.find((c) => c.id === id);
@@ -120,13 +120,22 @@
     icon: 'don',
     dem() {
       const d = donCho();
-      return d.vang.length + d.doiCa.length + d.deNghi.length;
+      return d.vang.length + d.doiCa.length + d.deNghi.length + Store.state.troLy.filter((t) => t.trangThai === 'cho_xac_nhan').length;
     },
     render() {
       const { vang, doiCa, deNghi } = donCho();
       const hn = L.ngayKey(new Date(Store.now()));
       const nut = (act, id, ten, kieu = 'nut-phu') => `<button type="button" class="nut ${kieu} nut-nho" data-act="${act}" data-id="${esc(id)}">${ten}</button>`;
+      const xinXacNhan = Store.state.troLy.filter((t) => t.trangThai === 'cho_xac_nhan');
+      const nutTT = (t, moi, ten, kieu = 'nut-phu') => `<button type="button" class="nut ${kieu} nut-nho" data-act="doi-trang-thai" data-mssv="${esc(t.mssv)}" data-moi="${moi}">${ten}</button>`;
       return `
+        ${xinXacNhan.length ? `<section class="the the-nhat">
+          <h2>Trợ lý xin xác nhận (${xinXacNhan.length})</h2>
+          <p class="phu">Bạn tự khai là trợ lý đang làm. Đối chiếu đúng người rồi mới xác nhận.</p>
+          <ul class="ds-gon">${xinXacNhan.map((t) => `
+            <li><span><strong>${esc(t.hoTen)}</strong> · ${esc(t.mssv)}<br />${esc(t.lop)} · ${esc(t.sdt)}<small>Gửi ${ngayDu(t.ngayDangKy)}</small></span>
+            <span class="hang-nut">${nutTT(t, 'dang_hoat_dong', 'Đang hoạt động', 'nut-xanh')}${nutTT(t, 'thu_viec', 'Thử việc')}${nutTT(t, 'tu_choi', 'Không phải trợ lý')}</span></li>`).join('')}</ul>
+        </section>` : ''}
         <section class="the">
           <h2>Xin vắng (${vang.length})</h2>
           ${vang.length ? `<ul class="ds-gon">${vang.map((d) => `
