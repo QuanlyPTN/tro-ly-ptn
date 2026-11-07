@@ -309,7 +309,19 @@
     async kiemTraMssv(mssv) {
       if (TU_XA) return (await DongBo.goi('kiemTraMssv', { mssv })).ketQua;
       const t = this.troLy(mssv);
-      return !t ? 'chua_co' : t.maMay === this.maMay() ? 'may_nay' : 'may_khac';
+      return !t ? 'chua_co' : !t.maMay ? 'cho_kich_hoat' : t.maMay === this.maMay() ? 'may_nay' : 'may_khac';
+    },
+
+    async kichHoat(mssv, ma) {
+      if (TU_XA) return DongBo.thucHien('kichHoat', { mssv, ma });
+      const t = this.troLy(mssv);
+      const loi = L.kiemTraKichHoat(t, ma);
+      if (loi) throw new Error(loi);
+      t.maMay = this.maMay();
+      delete t.maKichHoat;
+      this.phien.mssv = mssv;
+      this.luuPhien();
+      this.luu();
     },
 
     /* Phát đề, lưu, nộp: bản thật do máy chủ làm vì đáp án chỉ nằm ở đó. */

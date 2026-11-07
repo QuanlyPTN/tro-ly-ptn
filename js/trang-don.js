@@ -102,7 +102,7 @@
     const mssv = el.dataset.mssv;
     Store.state.deNghi.push({ id: Store.id('dn'), mssv, loai: 'chuyen_may', maMayMoi: Store.maMay(), trangThai: 'cho_duyet', nguoiDuyet: null, luc: Store.now() });
     Store.luu();
-    document.getElementById('loi-dang-ky').textContent = 'Đã gửi đề nghị chuyển máy, đang chờ PTN duyệt. Duyệt xong, nhập lại MSSV để dùng tiếp.';
+    el.parentElement.textContent = 'Đã gửi đề nghị chuyển máy, đang chờ PTN duyệt. Duyệt xong, nhập lại MSSV để dùng tiếp.';
   };
 
   /* ---------- Duyệt đơn ---------- */

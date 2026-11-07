@@ -16,7 +16,7 @@
   const MO_TA = {
     'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực cho tuần sau', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
     'thong-bao': 'Tin từ PTN và nhắc việc', 'xin-vang': 'Gửi đơn và theo dõi duyệt', 'tap-huan': 'Bài kiểm tra và ôn luyện', 'tai-lieu': 'Đọc hiểu trước khi làm bài',
-    'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Trở thành trợ lý PTN',
+    'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Vào phần trợ lý hoặc đăng ký mới',
     'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xin vắng, đổi ca, chuyển máy',
     'so-ne-nep': 'Ghi nhận lỗi và điểm tốt', 'canh-bao': 'Web đề xuất, quản lý chốt', 'viec-ngoai-ca': 'Việc đột xuất, việc giao và thống kê', 'thong-bao-ql': 'Soạn tin và xem ai đã đọc',
     'quan-ly-tap-huan': 'Buổi khảo sát, chấm bài, mở lại bài', 'ngan-hang': 'File câu hỏi, xem và sửa từng câu', 'noi-dung': 'Tài liệu tập huấn và nội quy',

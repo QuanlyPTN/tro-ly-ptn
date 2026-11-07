@@ -237,6 +237,7 @@
         ${choDuyet ? `<section class="the the-nhat"><p><strong>${choDuyet} đơn đăng ký mới</strong> đang chờ xét. Bấm vào tên để xem kết quả khảo sát và duyệt.</p></section>` : ''}
         ${st.dangKyNhanTin.length ? `<section class="the"><h2>Chờ tin đợt tuyển (${st.dangKyNhanTin.length})</h2><p class="phu">${esc(st.dangKyNhanTin.map((d) => `${d.hoTen} (${d.sdt})`).join(', '))}</p></section>` : ''}
         <section class="the">
+          <div class="hang-dau"><h2>Trợ lý (${ds.length})</h2><button type="button" class="nut nut-nho" data-act="them-tro-ly">Thêm trợ lý</button></div>
           <div class="bo-loc">
             <input type="search" placeholder="Tìm tên hoặc MSSV" aria-label="Tìm tên hoặc MSSV" value="${esc(loc.tim)}" data-doi="doi-loc" data-loc="tim" />
             <select data-doi="doi-loc" data-loc="hocKy" aria-label="Học kỳ">${st.hocKy.map((k) => `<option value="${esc(k.id)}"${k.id === loc.hocKy ? ' selected' : ''}>${esc(k.ten)}</option>`).join('')}</select>
@@ -293,6 +294,42 @@
     Store.luu();
   };
 
+  App.act['them-tro-ly'] = () => moHop('Thêm trợ lý đang làm', `
+    <p class="phu">Dùng cho trợ lý đã làm ở PTN, không cần qua đợt tuyển. Thêm xong, đưa mã kích hoạt cho bạn đó.</p>
+    <form data-form="them-tro-ly" class="luoi-form">
+      <label>Họ tên <input name="hoTen" required /></label>
+      <label>MSSV <input name="mssv" required pattern="[0-9A-Za-z]{6,15}" title="6 đến 15 ký tự chữ hoặc số" /></label>
+      <label>Ngày sinh <input type="date" name="ngaySinh" required /></label>
+      <label>Lớp <input name="lop" required /></label>
+      <label>Ngành <input name="nganh" required /></label>
+      <label>Năm ra trường <input type="number" name="namRaTruong" min="2020" max="2040" required /></label>
+      <label>Số điện thoại <input type="tel" name="sdt" required pattern="[0-9]{9,11}" title="9 đến 11 chữ số" /></label>
+      <label>Email <input type="email" name="email" required /></label>
+      <label>Trạng thái <select name="trangThai"><option value="dang_hoat_dong">Đang hoạt động</option><option value="thu_viec">Thử việc</option></select></label>
+      <p id="loi-them-tro-ly" class="loi rong-het" role="alert" hidden></p>
+      <div class="hang-nut rong-het canh-phai"><button class="nut">Thêm và tạo mã</button></div>
+    </form>`);
+
+  App.form['them-tro-ly'] = (f) => {
+    const mssv = f.mssv.trim();
+    if (Store.troLy(mssv)) {
+      const p = document.getElementById('loi-them-tro-ly');
+      p.hidden = false;
+      p.textContent = 'MSSV này đã có trong danh sách.';
+      return;
+    }
+    const maKichHoat = String(100000 + Math.floor(Math.random() * 900000));
+    const hn = homNay();
+    Store.state.troLy.push({
+      mssv, hoTen: f.hoTen.trim(), ngaySinh: f.ngaySinh, lop: f.lop.trim(), nganh: f.nganh.trim(), namRaTruong: Number(f.namRaTruong), sdt: f.sdt.trim(), email: f.email.trim(),
+      maMay: '', maKichHoat, trangThai: f.trangThai, ngayDangKy: hn, ngayDuyet: hn, nguoiDuyet: Store.nguoiDung().id, ngayChinhThuc: f.trangThai === 'dang_hoat_dong' ? hn : null
+    });
+    Store.ghiNhatKy('Thêm trợ lý có sẵn', mssv);
+    App.xong();
+    moHop('Đã thêm trợ lý', `<p>${esc(f.hoTen.trim())}, MSSV ${esc(mssv)}.</p><p class="ma-vao">Mã kích hoạt: <b>${maKichHoat}</b></p>
+      <p class="phu">Bạn đó mở web, nhập MSSV và mã này. Mã chỉ dùng một lần; xem lại ở chi tiết trợ lý.</p>`);
+  };
+
   function nutTrangThai(t) {
     const nut = (ten, moi, kieu = 'nut-phu') => `<button type="button" class="nut ${kieu} nut-nho" data-act="doi-trang-thai" data-mssv="${esc(t.mssv)}" data-moi="${moi}">${ten}</button>`;
     const theo = {
@@ -315,7 +352,8 @@
       <div class="hang-dau">${nhan(UI.TRANG_THAI_TRO_LY, t.trangThai)}<span class="phu">Đăng ký ${ngayDu(t.ngayDangKy)}</span></div>
       <dl class="luoi-thong-tin">
         ${dong('MSSV', t.mssv)}${dong('Ngày sinh', ngayDu(t.ngaySinh))}${dong('Lớp', t.lop)}${dong('Ngành', t.nganh)}
-        ${dong('Năm ra trường', t.namRaTruong)}${dong('Điện thoại', t.sdt)}${dong('Email', t.email)}${dong('Mã máy', t.maMay)}
+        ${dong('Năm ra trường', t.namRaTruong)}${dong('Điện thoại', t.sdt)}${dong('Email', t.email)}${dong('Mã máy', t.maMay || 'Chưa kích hoạt')}
+        ${t.maKichHoat ? dong('Mã kích hoạt', t.maKichHoat) : ''}
         ${dong('Tổng giờ', so(cs.tongGio))}${dong('Tham gia', tyLe(cs.tyLeThamGia))}${dong('Đúng giờ', tyLe(cs.tyLeDungGio))}${dong('Ca bỏ', cs.soCaBo)}
       </dl>
       ${t.trangThai === 'cho_duyet' ? `<p class="phu">Lộ trình: ${esc(App.moTaLoTrinh(t))}.</p>` : ''}

@@ -5,14 +5,52 @@
   const toi = () => Store.troLy(Store.phien.mssv);
   const homNay = () => L.ngayKey(new Date(Store.now()));
 
+  /* ---------- Trợ lý đã có vào app, đổi máy ---------- */
+  const theDaLaTroLy = () => `
+    <section class="the">
+      <h2>Bạn đã là trợ lý?</h2>
+      <p class="phu">Nhập MSSV và mã kích hoạt do PTN cấp. Đổi điện thoại thì chỉ cần nhập MSSV.</p>
+      <form data-form="kich-hoat" class="luoi-form">
+        <label>MSSV <input name="mssv" required autocomplete="off" /></label>
+        <label>Mã kích hoạt <input name="ma" inputmode="numeric" autocomplete="off" /></label>
+        <p id="loi-kich-hoat" class="loi rong-het" role="alert" hidden></p>
+        <div class="hang-nut rong-het"><button class="nut">Vào phần trợ lý</button></div>
+      </form>
+    </section>`;
+
+  App.form['kich-hoat'] = async (f) => {
+    const mssv = f.mssv.trim();
+    const p = document.getElementById('loi-kich-hoat');
+    const bao = (html) => {
+      p.hidden = false;
+      p.innerHTML = html;
+    };
+    try {
+      const tinhTrang = await Store.kiemTraMssv(mssv);
+      if (tinhTrang === 'chua_co') return bao('Không tìm thấy MSSV này. Liên hệ PTN để được thêm vào danh sách.');
+      if (tinhTrang === 'may_khac') return bao(`MSSV này đang dùng ở thiết bị khác. <button type="button" class="nut nut-phu nut-nho" data-act="gui-chuyen-may" data-mssv="${esc(mssv)}">Gửi đề nghị chuyển máy</button>`);
+      if (tinhTrang === 'may_nay') {
+        Store.phien.mssv = mssv;
+        Store.luuPhien();
+      } else await Store.kichHoat(mssv, f.ma);
+    } catch (loi) {
+      return bao(esc(loi.tuMayChu || !Store.tuXa ? loi.message : 'Không kết nối được máy chủ, thử lại sau.'));
+    }
+    App.ui.trang = null;
+    App.render();
+    window.scrollTo(0, 0);
+    thongBao('Đã vào phần trợ lý.');
+  };
+
   /* ---------- Đăng ký theo đợt tuyển ---------- */
   App.trang['dang-ky'] = {
-    ten: 'Đăng ký trợ lý',
+    ten: 'Trợ lý PTN',
     icon: 'nguoi',
     render() {
       const dot = L.dotTuyenMo(Store.state, Store.now());
       if (!dot) {
         return `
+          ${theDaLaTroLy()}
           <section class="the">
             <h2>Chưa đến đợt tuyển</h2>
             <p class="phu">Để lại tên và số điện thoại, PTN sẽ báo khi mở đợt tuyển mới.</p>
@@ -24,6 +62,7 @@
           </section>`;
       }
       return `
+        ${theDaLaTroLy()}
         <section class="the">
           <h2>${esc(dot.ten)}</h2>
           <p class="phu">Nhận đăng ký đến ${ngayDu(dot.denNgay)}. Thông tin lưu luôn, lần sau không phải nhập lại. Sau khi gửi, bạn làm bài khảo sát tuyển.</p>
@@ -57,6 +96,11 @@
       tinhTrang = await Store.kiemTraMssv(mssv);
     } catch {
       return thongBao('Không kết nối được máy chủ, thử lại sau.', 'loi');
+    }
+    if (tinhTrang === 'cho_kich_hoat') {
+      loi.hidden = false;
+      loi.textContent = 'MSSV này đã có trong danh sách. Nhập mã kích hoạt ở khung "Bạn đã là trợ lý?" phía trên.';
+      return;
     }
     if (tinhTrang !== 'chua_co') {
       if (tinhTrang === 'may_nay') {

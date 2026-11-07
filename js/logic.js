@@ -601,6 +601,14 @@
     return troLy.trangThai === 'cho_duyet' && st.caiDat.choOnTruocKhaoSat !== false && loTrinhTuyen(st, troLy.mssv).docXong;
   }
 
+  /* Trợ lý có sẵn do quản lý thêm: gắn vào máy đầu tiên nhập đúng MSSV và mã kích hoạt. */
+  function kiemTraKichHoat(troLy, ma) {
+    if (!troLy) return 'Không tìm thấy MSSV này.';
+    if (troLy.maMay) return 'MSSV này đã kích hoạt trên máy khác.';
+    if (!troLy.maKichHoat || String(ma || '').trim() !== troLy.maKichHoat) return 'Mã kích hoạt không đúng.';
+    return null;
+  }
+
   /* Đợt còn được làm khi chưa có bài nào, hoặc mọi bài trước đã được quản lý mở lại. */
   const baiHieuLuc = (st, mssv, dotId) => st.baiLam.filter((b) => b.mssv === mssv && b.dotId === dotId && !b.moLaiBoi).pop() || null;
 
@@ -645,6 +653,6 @@
     kiemTraNhanCa, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,
     xao, laCauUuTien, sinhDe, chamTN, chamTuLuan, ketLuanBai, baiHieuLuc, docNganHang,
     NGAN_HANG_TRONG, themFileNganHang, xoaFileNganHang, thongKeNganHang, canhBaoDuDe, kiemTraCauHoi, kiemTraTuLuan,
-    daXacNhanNoiQuy, loTrinhTuyen, kiemTraDangKyBuoi, kiemTraVaoKhaoSat, duocOnLuyen
+    kiemTraKichHoat, daXacNhanNoiQuy, loTrinhTuyen, kiemTraDangKyBuoi, kiemTraVaoKhaoSat, duocOnLuyen
   };
 });

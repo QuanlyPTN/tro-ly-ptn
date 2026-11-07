@@ -1,6 +1,6 @@
 /* Chạy offline khi mở qua http(s). Ưu tiên bản mới từ mạng, mất mạng thì dùng bản đã lưu. */
 const TIEN_TO = 'tro-ly-ptn-';
-const CACHE = `${TIEN_TO}v9`;
+const CACHE = `${TIEN_TO}v10`;
 const TAP_TIN = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/cau-hinh.js', 'js/logic.js', 'js/store.js', 'js/dong-bo.js', 'js/ui.js', 'js/app.js',
