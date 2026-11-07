@@ -23,6 +23,7 @@
             <li><span><strong>${esc(t.ten)}</strong> · ${esc(t.email)} ${t.khoa ? '<span class="nhan nhan-do">Đã khóa</span>' : ''}<br /><small>${esc(tomTatQuyen(t))}</small></span>
               <span class="hang-nut">
                 <button type="button" class="nut nut-nho" data-act="phan-quyen" data-id="${esc(t.id)}">Phân quyền</button>
+                ${Store.tuXa ? `<button type="button" class="nut nut-phu nut-nho" data-act="dat-lai-mat-khau" data-id="${esc(t.id)}">Đặt lại mật khẩu</button>` : ''}
                 <button type="button" class="nut nut-phu nut-nho" data-act="khoa-tai-khoan" data-id="${esc(t.id)}">${t.khoa ? 'Mở khóa' : 'Khóa'}</button>
               </span></li>`).join('')}</ul>
           <form data-form="them-tai-khoan" class="luoi-form">
@@ -61,6 +62,69 @@
     }
     Store.ghiNhatKy(t.khoa ? 'Khóa tài khoản' : 'Mở khóa tài khoản', t.email);
     App.xong();
+  };
+
+  /* ---------- Mật khẩu ---------- */
+  const oMatKhauMoi = `
+    <label>Mật khẩu mới <input type="password" name="matKhauMoi" minlength="8" autocomplete="new-password" required /></label>
+    <label>Nhập lại mật khẩu mới <input type="password" name="nhapLai" minlength="8" autocomplete="new-password" required /></label>`;
+  const baoLoi = (id, noiDung) => {
+    const p = document.getElementById(id);
+    p.hidden = false;
+    p.textContent = noiDung;
+  };
+
+  App.trang['doi-mat-khau'] = {
+    ten: 'Đổi mật khẩu',
+    icon: 'khoa',
+    render: () => `
+      <section class="the hop-dang-nhap">
+        <h2>Đổi mật khẩu</h2>
+        <p class="phu">${Store.tuXa ? 'Mật khẩu từ 8 ký tự. Đổi xong, các máy khác đang đăng nhập tài khoản này sẽ phải đăng nhập lại.' : 'Bản thử trên máy không dùng mật khẩu.'}</p>
+        <form data-form="doi-mat-khau">
+          <label>Mật khẩu hiện tại <input type="password" name="matKhauCu" autocomplete="current-password" required /></label>
+          ${oMatKhauMoi}
+          <p id="loi-doi-mat-khau" class="loi" role="alert" hidden></p>
+          <div class="hang-nut canh-phai"><button class="nut">Đổi mật khẩu</button></div>
+        </form>
+      </section>`
+  };
+
+  App.form['doi-mat-khau'] = async (f, el) => {
+    if (f.matKhauMoi !== f.nhapLai) return baoLoi('loi-doi-mat-khau', 'Hai lần nhập mật khẩu mới không khớp.');
+    if (!Store.tuXa) return thongBao('Bản thử trên máy không dùng mật khẩu.');
+    const nut = el.querySelector('button');
+    nut.disabled = true;
+    try {
+      await DongBo.doiMatKhau(f.matKhauCu, f.matKhauMoi);
+    } catch (loi) {
+      nut.disabled = false;
+      return baoLoi('loi-doi-mat-khau', loi.tuMayChu ? loi.message : 'Không kết nối được máy chủ.');
+    }
+    el.reset();
+    nut.disabled = false;
+    thongBao('Đã đổi mật khẩu. Lần sau đăng nhập bằng mật khẩu mới.');
+  };
+
+  App.act['dat-lai-mat-khau'] = (el) => {
+    const t = Store.state.taiKhoan.find((x) => x.id === el.dataset.id);
+    UI.moHop(`Đặt lại mật khẩu: ${t.ten}`, `
+      <p class="phu">Dùng khi ${esc(t.ten)} quên mật khẩu. Báo mật khẩu mới cho người đó và nhắc họ tự đổi sau khi đăng nhập. Máy đang đăng nhập tài khoản này sẽ bị đăng xuất.</p>
+      <form data-form="dat-lai-mat-khau" data-id="${esc(t.id)}">
+        ${oMatKhauMoi}
+        <p id="loi-dat-lai" class="loi" role="alert" hidden></p>
+        <div class="hang-nut canh-phai"><button class="nut">Đặt lại</button></div>
+      </form>`);
+  };
+
+  App.form['dat-lai-mat-khau'] = async (f, el) => {
+    if (f.matKhauMoi !== f.nhapLai) return baoLoi('loi-dat-lai', 'Hai lần nhập mật khẩu mới không khớp.');
+    try {
+      await DongBo.thucHien('datLaiMatKhau', { id: el.dataset.id, matKhauMoi: f.matKhauMoi });
+    } catch (loi) {
+      return baoLoi('loi-dat-lai', loi.tuMayChu ? loi.message : 'Không kết nối được máy chủ.');
+    }
+    App.xong('Đã đặt lại mật khẩu.');
   };
 
   App.act['phan-quyen'] = (el) => {

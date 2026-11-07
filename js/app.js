@@ -11,7 +11,7 @@
     ['Vận hành', ['tong-quan', 'bang-ca', 'danh-sach', 'duyet-don', 'so-ne-nep', 'canh-bao']],
     ['Việc và tin', ['viec-ngoai-ca', 'thong-bao-ql']],
     ['Tập huấn', ['quan-ly-tap-huan', 'ngan-hang', 'noi-dung', 'cuoi-ky']],
-    ['Hệ thống', ['tai-khoan', 'cai-dat', 'nhat-ky', 'dang-nhap']]
+    ['Hệ thống', ['tai-khoan', 'cai-dat', 'nhat-ky', 'doi-mat-khau', 'dang-nhap']]
   ];
   const MO_TA = {
     'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực cho tuần sau', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
@@ -20,7 +20,7 @@
     'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xác nhận trợ lý, xin vắng, đổi ca, chuyển máy',
     'so-ne-nep': 'Ghi nhận lỗi và điểm tốt', 'canh-bao': 'Web đề xuất, quản lý chốt', 'viec-ngoai-ca': 'Việc đột xuất, việc giao và thống kê', 'thong-bao-ql': 'Soạn tin và xem ai đã đọc',
     'quan-ly-tap-huan': 'Buổi khảo sát, chấm bài, mở lại bài', 'ngan-hang': 'File câu hỏi, xem và sửa từng câu', 'noi-dung': 'Tài liệu tập huấn và nội quy',
-    'cuoi-ky': 'Đánh giá và xếp loại học kỳ', 'tai-khoan': 'Tài khoản quản lý', 'cai-dat': 'Đợt tuyển, mốc, danh mục', 'nhat-ky': 'Ai làm gì, lúc nào'
+    'cuoi-ky': 'Đánh giá và xếp loại học kỳ', 'tai-khoan': 'Tài khoản quản lý', 'doi-mat-khau': 'Mật khẩu đăng nhập web quản lý', 'cai-dat': 'Đợt tuyển, mốc, danh mục', 'nhat-ky': 'Ai làm gì, lúc nào'
   };
   const MENU_DUOI = { tro_ly: ['trang-chu', 'ca-hom-nay', 'lich-truc', 'thong-bao'], ung_vien: ['tap-huan', 'tai-lieu', 'noi-quy', 'thong-bao'], quan_ly: ['tong-quan', 'bang-ca', 'duyet-don', 'danh-sach'] };
 
@@ -45,7 +45,7 @@
       const duocMo = new Set(L.QUYEN.filter((q) => Store.coQuyen(q.ma)).flatMap((q) => q.trang));
       const quanLy = ['tong-quan', 'bang-ca', 'danh-sach', 'duyet-don', 'so-ne-nep', 'thong-bao-ql', 'viec-ngoai-ca', 'canh-bao', 'quan-ly-tap-huan', 'ngan-hang', 'noi-dung', 'cuoi-ky', 'cai-dat', 'nhat-ky']
         .filter((id) => ['tong-quan', 'noi-dung'].includes(id) || duocMo.has(id));
-      return vaiTro === 'admin' ? [...quanLy, 'tai-khoan'] : quanLy;
+      return vaiTro === 'admin' ? [...quanLy, 'tai-khoan', 'doi-mat-khau'] : [...quanLy, 'doi-mat-khau'];
     },
 
     /* nen = true: vẽ lại do dữ liệu nền về. Phần không đổi thì giữ nguyên, nếu không cú bấm rơi đúng lúc thay DOM sẽ bị mất. */

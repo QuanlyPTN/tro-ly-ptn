@@ -198,6 +198,12 @@
       nhanVe(kq);
     },
 
+    async doiMatKhau(matKhauCu, matKhauMoi) {
+      const kq = await goi('doiMatKhau', { matKhauCu, matKhauMoi });
+      localStorage.setItem(KHOA_TOKEN, kq.token);
+      nhanVe(kq);
+    },
+
     async dangXuat() {
       localStorage.removeItem(KHOA_TOKEN);
       nhanVe(await goi('keo'));
