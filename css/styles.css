@@ -73,6 +73,8 @@ button:disabled { cursor: not-allowed; }
 .muc-nav.dang-mo { background: var(--den); border-color: rgba(255, 255, 255, .28); color: var(--vs); font-weight: 700; text-shadow: var(--chu-sang); box-shadow: 0 2px 6px rgba(0, 0, 0, .35), inset 0 0 0 1px rgba(255, 255, 255, .1); }
 .huy-hieu { margin-left: auto; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #D93025; color: #fff; font: 700 11.5px/20px system-ui, sans-serif; text-align: center; text-shadow: none; }
 
+.thu-demo:empty { display: none; }
+.hop-dang-nhap { max-width: 440px; width: 100%; margin: 24px auto; }
 .thu-demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, .7); border: 1px solid rgba(120, 210, 190, .45); font-size: 14px; }
 .thu-demo label { font-size: 13.5px; }
 .thu-demo input, .thu-demo select { min-width: 0; min-height: 34px !important; font-size: 14px !important; padding: 4px 8px !important; }

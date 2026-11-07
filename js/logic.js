@@ -601,13 +601,16 @@
     return troLy.trangThai === 'cho_duyet' && st.caiDat.choOnTruocKhaoSat !== false && loTrinhTuyen(st, troLy.mssv).docXong;
   }
 
-  /* Trợ lý có sẵn do quản lý thêm: gắn vào máy đầu tiên nhập đúng MSSV và mã kích hoạt. */
-  function kiemTraKichHoat(troLy, ma) {
-    if (!troLy) return 'Không tìm thấy MSSV này.';
-    if (troLy.maMay) return 'MSSV này đã kích hoạt trên máy khác.';
-    if (!troLy.maKichHoat || String(ma || '').trim() !== troLy.maKichHoat) return 'Mã kích hoạt không đúng.';
-    return null;
+  /* Trợ lý do Admin thêm vào app chỉ bằng mã. Bỏ các ký tự dễ nhầm như 0/O, 1/I/L. */
+  const KY_TU_MA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  function taoMaKichHoat(dsTroLy, rng = Math.random) {
+    for (;;) {
+      const ma = Array.from({ length: 6 }, () => KY_TU_MA[Math.floor(rng() * KY_TU_MA.length)]).join('');
+      if (!dsTroLy.some((t) => t.maKichHoat === ma)) return ma;
+    }
   }
+  const chuanHoaMa = (ma) => String(ma || '').trim().toUpperCase();
+  const timTheoMa = (dsTroLy, ma) => (chuanHoaMa(ma) ? dsTroLy.find((t) => t.maKichHoat === chuanHoaMa(ma)) || null : null);
 
   /* Đợt còn được làm khi chưa có bài nào, hoặc mọi bài trước đã được quản lý mở lại. */
   const baiHieuLuc = (st, mssv, dotId) => st.baiLam.filter((b) => b.mssv === mssv && b.dotId === dotId && !b.moLaiBoi).pop() || null;
@@ -653,6 +656,6 @@
     kiemTraNhanCa, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,
     xao, laCauUuTien, sinhDe, chamTN, chamTuLuan, ketLuanBai, baiHieuLuc, docNganHang,
     NGAN_HANG_TRONG, themFileNganHang, xoaFileNganHang, thongKeNganHang, canhBaoDuDe, kiemTraCauHoi, kiemTraTuLuan,
-    kiemTraKichHoat, daXacNhanNoiQuy, loTrinhTuyen, kiemTraDangKyBuoi, kiemTraVaoKhaoSat, duocOnLuyen
+    taoMaKichHoat, timTheoMa, daXacNhanNoiQuy, loTrinhTuyen, kiemTraDangKyBuoi, kiemTraVaoKhaoSat, duocOnLuyen
   };
 });

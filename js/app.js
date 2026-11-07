@@ -11,12 +11,12 @@
     ['Vận hành', ['tong-quan', 'bang-ca', 'danh-sach', 'duyet-don', 'so-ne-nep', 'canh-bao']],
     ['Việc và tin', ['viec-ngoai-ca', 'thong-bao-ql']],
     ['Tập huấn', ['quan-ly-tap-huan', 'ngan-hang', 'noi-dung', 'cuoi-ky']],
-    ['Hệ thống', ['tai-khoan', 'cai-dat', 'nhat-ky']]
+    ['Hệ thống', ['tai-khoan', 'cai-dat', 'nhat-ky', 'dang-nhap']]
   ];
   const MO_TA = {
     'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực cho tuần sau', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
     'thong-bao': 'Tin từ PTN và nhắc việc', 'xin-vang': 'Gửi đơn và theo dõi duyệt', 'tap-huan': 'Bài kiểm tra và ôn luyện', 'tai-lieu': 'Đọc hiểu trước khi làm bài',
-    'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Vào phần trợ lý hoặc đăng ký mới',
+    'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Nhập mã hoặc đăng ký mới', 'dang-nhap': 'Dành cho quản lý và Admin',
     'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xin vắng, đổi ca, chuyển máy',
     'so-ne-nep': 'Ghi nhận lỗi và điểm tốt', 'canh-bao': 'Web đề xuất, quản lý chốt', 'viec-ngoai-ca': 'Việc đột xuất, việc giao và thống kê', 'thong-bao-ql': 'Soạn tin và xem ai đã đọc',
     'quan-ly-tap-huan': 'Buổi khảo sát, chấm bài, mở lại bài', 'ngan-hang': 'File câu hỏi, xem và sửa từng câu', 'noi-dung': 'Tài liệu tập huấn và nội quy',
@@ -33,6 +33,7 @@
 
     dsTrang() {
       const { vaiTro, mssv } = Store.phien;
+      if (Store.trangWeb === 'quan_ly' && vaiTro === 'tro_ly') return ['dang-nhap'];
       if (vaiTro === 'tro_ly') {
         const tl = Store.troLy(mssv);
         if (!tl) return ['dang-ky'];
@@ -85,6 +86,7 @@
     },
 
     nguoiDungHtml() {
+      if (['dang-nhap', 'dang-ky'].includes(this.ui.trang)) return '';
       const { ten } = Store.nguoiDung();
       const vai = { tro_ly: 'Trợ lý', quan_ly: 'Quản lý', admin: 'Admin' }[Store.phien.vaiTro];
       const tb = this.trang['thong-bao'];
@@ -97,7 +99,7 @@
 
     demoHtml() {
       if (Store.tuXa) {
-        if (Store.phien.vaiTro === 'tro_ly') return '<button type="button" class="nut nut-phu nut-nho" data-act="mo-dang-nhap">Đăng nhập quản lý</button>';
+        if (Store.phien.vaiTro === 'tro_ly') return '';
         return `<p class="nhan-demo">${esc(Store.nguoiDung().ten)}</p><button type="button" class="nut nut-phu nut-nho" data-act="dang-xuat">Đăng xuất</button>`;
       }
       const { vaiTro, mssv, taiKhoanId } = Store.phien;
@@ -190,7 +192,7 @@
         }
       });
 
-      if (location.protocol.startsWith('http') && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+      if (location.protocol.startsWith('http') && 'serviceWorker' in navigator) navigator.serviceWorker.register(`${window.CAU_HINH?.goc || ''}sw.js`);
 
       // Đồng hồ bài kiểm tra vẫn chạy khi app đóng, nên mở lại là vào thẳng bài đang làm.
       const { vaiTro, mssv } = Store.phien;
@@ -199,6 +201,18 @@
       if (this.batDauDem) this.batDauDem();
     }
   };
+
+  /* Hộp nhập lý do dùng chung. Mọi thao tác đổi trạng thái đều đi qua đây để có lý do ghi nhật ký. */
+  App.hoiLyDo = (tieuDe, moTa, xuLy, { batBuoc = true, nhanNut = 'Xác nhận' } = {}) => {
+    App.ui.sauLyDo = xuLy;
+    UI.moHop(tieuDe, `
+      ${moTa ? `<p class="phu">${esc(moTa)}</p>` : ''}
+      <form data-form="ly-do">
+        <label>Lý do <textarea name="lyDo" rows="3"${batBuoc ? ' required' : ''}></textarea></label>
+        <div class="hang-nut canh-phai"><button class="nut">${esc(nhanNut)}</button></div>
+      </form>`);
+  };
+  App.form['ly-do'] = (f) => App.ui.sauLyDo(f.lyDo.trim());
 
   App.act['di-den'] = (el) => {
     App.ui.trang = el.dataset.trang;
@@ -212,13 +226,20 @@
     App.ui.trang = null;
     App.render();
   };
-  App.act['mo-dang-nhap'] = () => UI.moHop('Đăng nhập quản lý', `
-    <form data-form="dang-nhap">
-      <label>Email <input type="email" name="email" autocomplete="username" required /></label>
-      <label>Mật khẩu <input type="password" name="matKhau" autocomplete="current-password" required /></label>
-      <p id="loi-dang-nhap" class="loi" role="alert" hidden></p>
-      <div class="hang-nut canh-phai"><button class="nut">Đăng nhập</button></div>
-    </form>`);
+  App.trang['dang-nhap'] = {
+    ten: 'Đăng nhập quản lý',
+    icon: 'khoa',
+    render: () => `
+      <section class="the hop-dang-nhap">
+        <h2>Web quản lý Trợ lý PTN</h2>
+        <form data-form="dang-nhap">
+          <label>Email <input type="email" name="email" autocomplete="username" required /></label>
+          <label>Mật khẩu <input type="password" name="matKhau" autocomplete="current-password" required /></label>
+          <p id="loi-dang-nhap" class="loi" role="alert" hidden></p>
+          <div class="hang-nut canh-phai"><button class="nut">Đăng nhập</button></div>
+        </form>
+      </section>`
+  };
   App.form['dang-nhap'] = async (f, el) => {
     const nut = el.querySelector('button');
     nut.disabled = true;

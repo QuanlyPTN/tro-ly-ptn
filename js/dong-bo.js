@@ -1,7 +1,7 @@
 /* Đồng bộ với máy chủ Apps Script. Trang vẫn sửa Store.state như bản chạy trên máy;
    ở đây so với bản máy chủ gần nhất, gửi phần thay đổi rồi nhận lại phần dữ liệu đã được máy chủ kiểm tra. */
 (function () {
-  const KHOA_CACHE = 'tlptn-tu-xa-v1';
+  const KHOA_CACHE = `tlptn-tu-xa-${window.CAU_HINH?.trangWeb}-v1`; // Hai web chung tên miền, mỗi web một bản.
   const KHOA_TOKEN = 'tlptn-token-v1';
   const TAP = {
     troLy: ['mssv'], thoiKhoaBieu: ['id'], caTruc: ['id'], luotTruc: ['id'], checklistMau: ['id'], checklistCa: ['luotTrucId', 'mucId'],
@@ -22,7 +22,7 @@
 
   const banSao = (x) => JSON.parse(JSON.stringify(x));
   const khoaCua = (tap, r) => TAP[tap].map((k) => r[k]).join('|');
-  const docToken = () => localStorage.getItem(KHOA_TOKEN) || '';
+  const docToken = () => (Store.trangWeb === 'quan_ly' ? localStorage.getItem(KHOA_TOKEN) || '' : '');
 
   async function goi(hd, du = {}) {
     const tra = await fetch(window.CAU_HINH.apiUrl, {

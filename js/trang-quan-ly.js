@@ -6,18 +6,6 @@
   const tenTroLy = (mssv) => Store.troLy(mssv)?.hoTen || mssv;
   const luotCuaCa = (id) => Store.state.luotTruc.find((l) => l.caTrucId === id) || null;
 
-  /* Hộp nhập lý do dùng chung. Mọi thao tác đổi trạng thái đều đi qua đây để có lý do ghi nhật ký. */
-  App.hoiLyDo = (tieuDe, moTa, xuLy, { batBuoc = true, nhanNut = 'Xác nhận' } = {}) => {
-    App.ui.sauLyDo = xuLy;
-    moHop(tieuDe, `
-      ${moTa ? `<p class="phu">${esc(moTa)}</p>` : ''}
-      <form data-form="ly-do">
-        <label>Lý do <textarea name="lyDo" rows="3"${batBuoc ? ' required' : ''}></textarea></label>
-        <div class="hang-nut canh-phai"><button class="nut">${esc(nhanNut)}</button></div>
-      </form>`);
-  };
-  App.form['ly-do'] = (f) => App.ui.sauLyDo(f.lyDo.trim());
-
   /* ---------- Bảng ca hôm nay ---------- */
   function duyetLuot(luot, ca, raSomCoPhep) {
     const st = Store.state;
@@ -217,7 +205,7 @@
       (!loc.trangThai || t.trangThai === loc.trangThai) &&
       (!loc.nganh || t.nganh === loc.nganh) &&
       (!loc.nam || String(t.namRaTruong) === loc.nam) &&
-      (!loc.thang || Number(t.ngaySinh.split('-')[1]) === Number(loc.thang)) &&
+      (!loc.thang || Number(String(t.ngaySinh).split('-')[1]) === Number(loc.thang)) &&
       (!tim || t.hoTen.toLowerCase().includes(tim) || t.mssv.includes(tim)));
   }
 
@@ -237,7 +225,7 @@
         ${choDuyet ? `<section class="the the-nhat"><p><strong>${choDuyet} đơn đăng ký mới</strong> đang chờ xét. Bấm vào tên để xem kết quả khảo sát và duyệt.</p></section>` : ''}
         ${st.dangKyNhanTin.length ? `<section class="the"><h2>Chờ tin đợt tuyển (${st.dangKyNhanTin.length})</h2><p class="phu">${esc(st.dangKyNhanTin.map((d) => `${d.hoTen} (${d.sdt})`).join(', '))}</p></section>` : ''}
         <section class="the">
-          <div class="hang-dau"><h2>Trợ lý (${ds.length})</h2><button type="button" class="nut nut-nho" data-act="them-tro-ly">Thêm trợ lý</button></div>
+          <div class="hang-dau"><h2>Trợ lý (${ds.length})</h2>${Store.phien.vaiTro === 'admin' ? '<button type="button" class="nut nut-nho" data-act="them-tro-ly">Thêm trợ lý</button>' : ''}</div>
           <div class="bo-loc">
             <input type="search" placeholder="Tìm tên hoặc MSSV" aria-label="Tìm tên hoặc MSSV" value="${esc(loc.tim)}" data-doi="doi-loc" data-loc="tim" />
             <select data-doi="doi-loc" data-loc="hocKy" aria-label="Học kỳ">${st.hocKy.map((k) => `<option value="${esc(k.id)}"${k.id === loc.hocKy ? ' selected' : ''}>${esc(k.ten)}</option>`).join('')}</select>
@@ -294,21 +282,23 @@
     Store.luu();
   };
 
-  App.act['them-tro-ly'] = () => moHop('Thêm trợ lý đang làm', `
-    <p class="phu">Dùng cho trợ lý đã làm ở PTN, không cần qua đợt tuyển. Thêm xong, đưa mã kích hoạt cho bạn đó.</p>
+  App.act['them-tro-ly'] = () => moHop('Thêm trợ lý', `
+    <p class="phu">Thêm xong, hệ thống trả về một mã. Trợ lý mở web, nhập mã là vào được.</p>
     <form data-form="them-tro-ly" class="luoi-form">
       <label>Họ tên <input name="hoTen" required /></label>
       <label>MSSV <input name="mssv" required pattern="[0-9A-Za-z]{6,15}" title="6 đến 15 ký tự chữ hoặc số" /></label>
-      <label>Ngày sinh <input type="date" name="ngaySinh" required /></label>
-      <label>Lớp <input name="lop" required /></label>
-      <label>Ngành <input name="nganh" required /></label>
-      <label>Năm ra trường <input type="number" name="namRaTruong" min="2020" max="2040" required /></label>
-      <label>Số điện thoại <input type="tel" name="sdt" required pattern="[0-9]{9,11}" title="9 đến 11 chữ số" /></label>
-      <label>Email <input type="email" name="email" required /></label>
       <label>Trạng thái <select name="trangThai"><option value="dang_hoat_dong">Đang hoạt động</option><option value="thu_viec">Thử việc</option></select></label>
+      <label>Ngành <input name="nganh" /></label>
+      <label>Lớp <input name="lop" /></label>
+      <label>Ngày sinh <input type="date" name="ngaySinh" /></label>
+      <label>Năm ra trường <input type="number" name="namRaTruong" min="2020" max="2040" /></label>
+      <label>Số điện thoại <input type="tel" name="sdt" pattern="[0-9]{9,11}" title="9 đến 11 chữ số" /></label>
       <p id="loi-them-tro-ly" class="loi rong-het" role="alert" hidden></p>
       <div class="hang-nut rong-het canh-phai"><button class="nut">Thêm và tạo mã</button></div>
     </form>`);
+
+  const hienMa = (t) => moHop('Mã của trợ lý', `<p>${esc(t.hoTen)}, MSSV ${esc(t.mssv)}.</p><p class="ma-vao">Mã: <b>${esc(t.maKichHoat)}</b></p>
+    <p class="phu">Trợ lý mở web, nhập mã này là vào được. Mã chỉ dùng một lần.</p>`);
 
   App.form['them-tro-ly'] = (f) => {
     const mssv = f.mssv.trim();
@@ -318,16 +308,24 @@
       p.textContent = 'MSSV này đã có trong danh sách.';
       return;
     }
-    const maKichHoat = String(100000 + Math.floor(Math.random() * 900000));
     const hn = homNay();
-    Store.state.troLy.push({
-      mssv, hoTen: f.hoTen.trim(), ngaySinh: f.ngaySinh, lop: f.lop.trim(), nganh: f.nganh.trim(), namRaTruong: Number(f.namRaTruong), sdt: f.sdt.trim(), email: f.email.trim(),
-      maMay: '', maKichHoat, trangThai: f.trangThai, ngayDangKy: hn, ngayDuyet: hn, nguoiDuyet: Store.nguoiDung().id, ngayChinhThuc: f.trangThai === 'dang_hoat_dong' ? hn : null
-    });
-    Store.ghiNhatKy('Thêm trợ lý có sẵn', mssv);
+    const t = {
+      mssv, hoTen: f.hoTen.trim(), ngaySinh: f.ngaySinh, lop: f.lop.trim(), nganh: f.nganh.trim(), namRaTruong: Number(f.namRaTruong) || '', sdt: f.sdt.trim(), email: '',
+      maMay: '', maKichHoat: L.taoMaKichHoat(Store.state.troLy), trangThai: f.trangThai, ngayDangKy: hn, ngayDuyet: hn, nguoiDuyet: Store.nguoiDung().id, ngayChinhThuc: f.trangThai === 'dang_hoat_dong' ? hn : null
+    };
+    Store.state.troLy.push(t);
+    Store.ghiNhatKy('Thêm trợ lý', mssv);
     App.xong();
-    moHop('Đã thêm trợ lý', `<p>${esc(f.hoTen.trim())}, MSSV ${esc(mssv)}.</p><p class="ma-vao">Mã kích hoạt: <b>${maKichHoat}</b></p>
-      <p class="phu">Bạn đó mở web, nhập MSSV và mã này. Mã chỉ dùng một lần; xem lại ở chi tiết trợ lý.</p>`);
+    hienMa(t);
+  };
+
+  App.act['cap-ma-moi'] = async (el) => {
+    const t = Store.troLy(el.dataset.mssv);
+    if (!(await xacNhan(`Cấp mã mới cho ${t.hoTen}? Máy đang dùng sẽ hết hiệu lực.`, 'Cấp mã mới'))) return;
+    Object.assign(t, { maMay: '', maKichHoat: L.taoMaKichHoat(Store.state.troLy) });
+    Store.ghiNhatKy('Cấp mã trợ lý mới', t.mssv);
+    App.xong();
+    hienMa(t);
   };
 
   function nutTrangThai(t) {
@@ -353,13 +351,13 @@
       <dl class="luoi-thong-tin">
         ${dong('MSSV', t.mssv)}${dong('Ngày sinh', ngayDu(t.ngaySinh))}${dong('Lớp', t.lop)}${dong('Ngành', t.nganh)}
         ${dong('Năm ra trường', t.namRaTruong)}${dong('Điện thoại', t.sdt)}${dong('Email', t.email)}${dong('Mã máy', t.maMay || 'Chưa kích hoạt')}
-        ${t.maKichHoat ? dong('Mã kích hoạt', t.maKichHoat) : ''}
+        ${t.maKichHoat ? dong('Mã trợ lý', t.maKichHoat) : ''}
         ${dong('Tổng giờ', so(cs.tongGio))}${dong('Tham gia', tyLe(cs.tyLeThamGia))}${dong('Đúng giờ', tyLe(cs.tyLeDungGio))}${dong('Ca bỏ', cs.soCaBo)}
       </dl>
       ${t.trangThai === 'cho_duyet' ? `<p class="phu">Lộ trình: ${esc(App.moTaLoTrinh(t))}.</p>` : ''}
       <h3>Bài kiểm tra</h3>
       ${bai.length ? `<ul class="ds-gon">${bai.map((b) => `<li><span>${esc(st.dotKiemTra.find((d) => d.id === b.dotId).ten)}: ${b.diemTN ?? '–'}/${b.de.tracNghiem.length} câu</span>${nhan(UI.KET_QUA_BAI, b.ketQua)}</li>`).join('')}</ul>` : '<p class="phu">Chưa làm bài nào.</p>'}
-      <div class="hang-nut">${nutTrangThai(t)}</div>`);
+      <div class="hang-nut">${nutTrangThai(t)}${Store.phien.vaiTro === 'admin' ? `<button type="button" class="nut nut-phu nut-nho" data-act="cap-ma-moi" data-mssv="${esc(t.mssv)}">Cấp mã mới</button>` : ''}</div>`);
   };
 
   App.act['doi-trang-thai'] = async (el) => {

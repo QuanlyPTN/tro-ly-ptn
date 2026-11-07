@@ -19,11 +19,12 @@
   };
 
   const TU_XA = Boolean(window.CAU_HINH?.apiUrl);
+  const TRANG_WEB = window.CAU_HINH?.trangWeb || 'demo'; // 'tro_ly', 'quan_ly' hoặc bản thử chung một trang.
 
   /* Bản chạy trên máy mới cần ngân hàng; bản thật không được tải file có đáp án. */
   const taiNganHang = () => new Promise((xong, loi) => {
     const the = document.createElement('script');
-    the.src = 'data/ngan-hang.js';
+    the.src = `${window.CAU_HINH?.goc || ''}data/ngan-hang.js`;
     the.onload = xong;
     the.onerror = () => loi(new Error('Không tải được ngân hàng câu hỏi.'));
     document.head.appendChild(the);
@@ -182,6 +183,7 @@
 
   const Store = {
     tuXa: TU_XA,
+    trangWeb: TRANG_WEB,
     state: null,
     phien: null,
     lechDongHo: 0,
@@ -312,14 +314,13 @@
       return !t ? 'chua_co' : !t.maMay ? 'cho_kich_hoat' : t.maMay === this.maMay() ? 'may_nay' : 'may_khac';
     },
 
-    async kichHoat(mssv, ma) {
-      if (TU_XA) return DongBo.thucHien('kichHoat', { mssv, ma });
-      const t = this.troLy(mssv);
-      const loi = L.kiemTraKichHoat(t, ma);
-      if (loi) throw new Error(loi);
+    async kichHoat(ma) {
+      if (TU_XA) return DongBo.thucHien('kichHoat', { ma });
+      const t = L.timTheoMa(this.state.troLy, ma);
+      if (!t) throw new Error('Mã không đúng hoặc đã được dùng.');
       t.maMay = this.maMay();
       delete t.maKichHoat;
-      this.phien.mssv = mssv;
+      this.phien.mssv = t.mssv;
       this.luuPhien();
       this.luu();
     },
