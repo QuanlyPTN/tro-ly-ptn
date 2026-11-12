@@ -644,7 +644,7 @@
      trang: mục menu được mở; tap: dữ liệu được ghi; xoa: dữ liệu được xóa. Admin luôn có mọi quyền.
      Tài khoản cũ chưa được phân quyền giữ đúng phần việc trước đây (QUYEN_MAC_DINH). */
   const QUYEN = [
-    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng', trang: ['bang-ca'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao'] },
+    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, xem lịch đăng ký', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao'] },
     { ma: 'tro_ly', nhom: 'Vận hành', ten: 'Danh sách trợ lý: xem hồ sơ, đổi trạng thái, xuất Excel', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'them_tro_ly', nhom: 'Vận hành', ten: 'Thêm trợ lý và cấp mã vào web', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'duyet_don', nhom: 'Vận hành', ten: 'Duyệt đơn: xin vắng, đổi ca, chuyển máy, PTN hủy ca', trang: ['duyet-don'], tap: ['donVang', 'doiCa', 'deNghi', 'caTruc', 'troLy'] },

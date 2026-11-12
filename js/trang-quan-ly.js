@@ -94,6 +94,61 @@
     }
   };
 
+  /* ---------- Lịch đăng ký tuần này, tuần sau ---------- */
+  const CA_HIEN = ['da_dang_ky', 'da_truc', 'vang_phep', 'vang_khong_bao']; // Ca đã hủy không hiện.
+  const soGioCa = (c) => (L.phut(c.den) - L.phut(c.tu)) / 60;
+  const soGioChu = (x) => String(Math.round(x * 10) / 10).replace('.', ',');
+
+  App.trang['lich-dang-ky'] = {
+    ten: 'Lịch đăng ký trực',
+    icon: 'lich',
+    render() {
+      const st = Store.state;
+      const sau = App.ui.tuanLich === 'sau';
+      const tuan = L.congNgay(L.dauTuan(homNay()), sau ? 7 : 0);
+      const cacNgay = st.caiDat.thuLamViec.map((thu) => L.congNgay(tuan, thu - 1));
+      const caTuan = st.caTruc
+        .filter((c) => cacNgay.includes(c.ngay) && CA_HIEN.includes(c.trangThai))
+        .sort((a, b) => a.ngay.localeCompare(b.ngay) || a.tu.localeCompare(b.tu) || tenTroLy(a.mssv).localeCompare(tenTroLy(b.mssv), 'vi'));
+      const theoNguoi = {};
+      caTuan.forEach((c) => {
+        const x = (theoNguoi[c.mssv] ||= { soCa: 0, soGio: 0 });
+        x.soCa++;
+        x.soGio += soGioCa(c);
+      });
+      const tongGio = caTuan.reduce((s, c) => s + soGioCa(c), 0);
+      const dongCa = (c) => `<li><span><span class="gio-ca">${c.tu}–${c.den}</span> ${esc(tenTroLy(c.mssv))}</span>${c.trangThai === 'da_dang_ky' ? '' : nhan(UI.TRANG_THAI_CA, c.trangThai)}</li>`;
+      const theNgay = (n) => {
+        const buoi = st.caiDat.buoi.map((b) => {
+          const ds = caTuan.filter((c) => c.ngay === n && L.phut(c.tu) < L.phut(b.den) && L.phut(c.den) > L.phut(b.tu));
+          return `<div><h3>${esc(b.ten)} (${ds.length})</h3>${ds.length ? `<ul class="ds-gon">${ds.map(dongCa).join('')}</ul>` : '<p class="phu"><span class="nhan nhan-do">Chưa có người</span></p>'}</div>`;
+        }).join('');
+        return `<section class="the"><h2>${ngay(n)}</h2><div class="luoi-buoi">${buoi}</div></section>`;
+      };
+      const nguoi = Object.keys(theoNguoi).sort((a, b) => tenTroLy(a).localeCompare(tenTroLy(b), 'vi'));
+      return `
+        <section class="the">
+          <div class="hang-dau">
+            <div class="chon-vai chon-loai">
+              <button type="button" class="${sau ? '' : 'dang-chon'}" data-act="doi-tuan-lich" data-tuan="nay" aria-pressed="${!sau}">Tuần này</button>
+              <button type="button" class="${sau ? 'dang-chon' : ''}" data-act="doi-tuan-lich" data-tuan="sau" aria-pressed="${sau}">Tuần sau</button>
+            </div>
+          </div>
+          <p class="phu">${ngayDu(tuan).slice(0, 5)} – ${ngayDu(cacNgay[cacNgay.length - 1]).slice(0, 5)}: ${caTuan.length} ca, ${nguoi.length} trợ lý, ${soGioChu(tongGio)} giờ.${sau ? (Store.now() < L.hanKhoaTuan(tuan, st.caiDat) ? ` Trợ lý còn đăng ký, hủy được đến ${ngayGio(L.hanKhoaTuan(tuan, st.caiDat))}.` : ' Đã khóa đăng ký.') : ''}</p>
+        </section>
+        ${cacNgay.map(theNgay).join('')}
+        <section class="the">
+          <h2>Theo trợ lý</h2>
+          ${nguoi.length ? `<div class="cuon-ngang"><table class="bang"><thead><tr><th>Trợ lý</th><th>Số ca</th><th>Số giờ</th></tr></thead><tbody>${nguoi.map((m) => `<tr><td><span class="dong-nguoi">${avatar(tenTroLy(m))}${esc(tenTroLy(m))}</span></td><td>${theoNguoi[m].soCa}</td><td>${soGioChu(theoNguoi[m].soGio)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="phu">Chưa có ai đăng ký tuần này.</p>'}
+        </section>`;
+    }
+  };
+
+  App.act['doi-tuan-lich'] = (el) => {
+    App.ui.tuanLich = el.dataset.tuan;
+    App.render();
+  };
+
   App.act['mo-duyet'] = (el) => {
     const st = Store.state;
     const l = st.luotTruc.find((x) => x.id === el.dataset.id);

@@ -256,6 +256,11 @@ button.o-so:hover { background: var(--kinh), rgba(255, 255, 255, .85); transform
 .luoi-ne-nep { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
 .luoi-ne-nep > div { padding: 12px 14px; background: rgba(255, 255, 255, .6); border: 1px solid rgba(120, 210, 190, .35); border-radius: 12px; }
 .luoi-ne-nep .nhan { white-space: normal; }
+.luoi-buoi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.luoi-buoi > div { padding: 10px 14px; background: rgba(255, 255, 255, .6); border: 1px solid rgba(120, 210, 190, .35); border-radius: 12px; }
+.luoi-buoi h3 { margin: 0; }
+.luoi-buoi .ds-gon li { padding: 8px 0; }
+.gio-ca { margin-right: 6px; font-weight: 600; color: var(--muc); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .luoi-ne-nep strong { display: block; font-size: 26.5px; font-weight: 700; color: var(--muc); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
 
 /* Biểu đồ cột */
@@ -394,6 +399,7 @@ dialog::backdrop { background: rgba(15, 23, 42, .55); }
 }
 
 @media (max-width: 760px) {
+  .luoi-buoi { grid-template-columns: 1fr; }
   body { font-size: 18.5px; }
   .khung-app { display: block; }
   .thanh-ben { position: fixed; inset: 0 0 calc(62px + env(safe-area-inset-bottom)) 0; z-index: 30; height: auto; display: none; background: linear-gradient(170deg, #F2FCF8, #D6F4EA); }
