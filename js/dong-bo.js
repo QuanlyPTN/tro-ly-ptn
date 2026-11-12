@@ -205,8 +205,10 @@
     },
 
     async dangXuat() {
+      // Xóa phiên trên máy chủ; mất mạng thì vẫn đăng xuất trên máy này.
+      const kq = await goi('dangXuat').catch(() => null);
       localStorage.removeItem(KHOA_TOKEN);
-      nhanVe(await goi('keo'));
+      nhanVe(kq || await goi('keo'));
     },
 
     /* Lưu tạm bài đang làm: giữ trên máy ngay, gom lại gửi máy chủ sau vài giây. */
