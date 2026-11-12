@@ -158,7 +158,6 @@
   };
 
   const O_SO = [
-    ['soNguoiMoiKhung', 'Số người tối đa mỗi khung (chờ chốt)'],
     ['phutDungGio', 'Đúng giờ: trễ tối đa (phút)'],
     ['phutTreToiDa', 'Trực đủ: trễ tối đa (phút)'],
     ['phutRaSomToiDa', 'Trực đủ: ra sớm tối đa (phút)'],

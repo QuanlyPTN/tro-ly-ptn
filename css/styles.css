@@ -291,7 +291,6 @@ button.o-so:hover { background: var(--kinh), rgba(255, 255, 255, .85); transform
 .o-co { background: var(--chinh-nhat); border-color: var(--chinh-nhat); color: var(--chinh-dam); }
 .o-cua-toi { background: var(--den); border-color: rgba(255, 255, 255, .3); color: var(--vs); font-weight: 700; }
 .o-hoc { background: var(--vang-nhat); border-color: var(--vang-nhat); color: var(--vang); }
-.o-day { background: #E0E6E6; border-color: #E0E6E6; color: var(--chu-phu); }
 .chu-thich { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 14.5px; color: var(--chu-phu); margin: 10px 0 0; }
 .o-mau { display: inline-block; width: 14px; height: 14px; min-height: 0; border-radius: 4px; margin-left: 10px; }
 .o-mau:first-child { margin-left: 0; }

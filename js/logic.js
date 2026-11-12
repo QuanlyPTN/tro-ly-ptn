@@ -17,7 +17,6 @@
     thuLamViec: [1, 2, 3, 4, 5, 6],
     phutToiThieuCa: 120,
     buocPhut: 30,
-    soNguoiMoiKhung: 3, // chờ chốt (mục 12)
     gioKhoaDangKy: '20:00',
     phutDungGio: 10,
     phutTreToiDa: 30,
@@ -126,13 +125,6 @@
 
     const caCuaToi = st.caTruc.filter((c) => c.mssv === yc.mssv && c.ngay === yc.ngay && CA_GIU_CHO.includes(c.trangThai));
     if (caCuaToi.some((c) => giao(a, b, phut(c.tu), phut(c.den)))) loi.push('Bạn đã có ca trùng khung giờ này.');
-
-    for (let t = a; t < b; t += cfg.buocPhut) {
-      if (soNguoiTrongKhung(st, yc.ngay, t, yc.mssv) >= cfg.soNguoiMoiKhung) {
-        loi.push(`Khung ${hhmm(t)} đã đủ ${cfg.soNguoiMoiKhung} người.`);
-        break;
-      }
-    }
 
     st.thoiKhoaBieu
       .filter((m) => m.mssv === yc.mssv && m.thu === thu && giao(a, b, phut(m.tu), phut(m.den)))

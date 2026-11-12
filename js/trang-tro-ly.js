@@ -341,14 +341,14 @@
         const soNguoi = L.soNguoiTrongKhung(st, n, p);
         const cuaMinh = cuaToi.some((c) => c.ngay === n && L.phut(c.tu) <= p && p < L.phut(c.den));
         const hoc = tkb.some((m) => m.thu === L.docNgay(n).getDay() && L.phut(m.tu) <= p && p < L.phut(m.den));
-        const lop = cuaMinh ? 'o-cua-toi' : soNguoi >= cfg.soNguoiMoiKhung ? 'o-day' : hoc ? 'o-hoc' : soNguoi ? 'o-co' : '';
-        const moTa = `${ngay(n)}, ${L.hhmm(p)}: ${soNguoi} trên ${cfg.soNguoiMoiKhung} người${cuaMinh ? ', ca của bạn' : ''}${hoc ? ', trùng lịch học' : ''}`;
-        return `<td><button type="button" class="o-khung ${lop}" data-act="chon-khung" data-ngay="${n}" data-tu="${L.hhmm(p)}" aria-label="${moTa}" title="${moTa}">${soNguoi}/${cfg.soNguoiMoiKhung}</button></td>`;
+        const lop = cuaMinh ? 'o-cua-toi' : hoc ? 'o-hoc' : soNguoi ? 'o-co' : '';
+        const moTa = `${ngay(n)}, ${L.hhmm(p)}: ${soNguoi} người đã đăng ký${cuaMinh ? ', ca của bạn' : ''}${hoc ? ', trùng lịch học' : ''}`;
+        return `<td><button type="button" class="o-khung ${lop}" data-act="chon-khung" data-ngay="${n}" data-tu="${L.hhmm(p)}" aria-label="${moTa}" title="${moTa}">${soNguoi}</button></td>`;
       }).join('');
       return `<tr><th scope="row">${L.hhmm(p)}</th>${o}</tr>`;
     }).join('');
     return `<div class="cuon-ngang"><table class="bang-khung"><thead><tr><th></th>${dau}</tr></thead><tbody>${dong}</tbody></table></div>
-      <p class="chu-thich"><span class="o-mau o-cua-toi"></span>Ca của bạn <span class="o-mau o-co"></span>Có người <span class="o-mau o-hoc"></span>Trùng lịch học <span class="o-mau o-day"></span>Đã đủ</p>`;
+      <p class="chu-thich"><span class="o-mau o-cua-toi"></span>Ca của bạn <span class="o-mau o-co"></span>Có người <span class="o-mau o-hoc"></span>Trùng lịch học</p>`;
   }
 
   App.trang['lich-truc'] = {
