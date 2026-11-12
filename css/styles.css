@@ -137,6 +137,8 @@ td.hang-nut > * + * { margin-left: 6px; }
 .nut-xanh:hover:not(:disabled) { filter: brightness(1.08); }
 .nut-sang:hover:not(:disabled) { filter: brightness(1.06); }
 .nut-sang { background: var(--vang-kim); color: #2A1F00; box-shadow: 0 4px 12px rgba(0, 0, 0, .35); }
+.nut-xoa { color: var(--do); border-color: #F1C3BE; }
+.nut-xoa-dac { background: var(--do); box-shadow: none; }
 .nut-nho { min-height: 36px; padding: 4px 13px; font-size: 16.5px; border-radius: 10px; }
 .nut-lon { width: 100%; min-height: 54px; font-size: 20px; margin-top: 8px; }
 .nut-rong { width: 100%; }

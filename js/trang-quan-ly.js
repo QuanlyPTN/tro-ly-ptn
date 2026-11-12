@@ -413,7 +413,40 @@
       ${t.trangThai === 'cho_duyet' ? `<p class="phu">Lộ trình: ${esc(App.moTaLoTrinh(t))}.</p>` : ''}
       <h3>Bài kiểm tra</h3>
       ${bai.length ? `<ul class="ds-gon">${bai.map((b) => `<li><span>${esc(st.dotKiemTra.find((d) => d.id === b.dotId).ten)}: ${b.diemTN ?? '–'}/${b.de.tracNghiem.length} câu</span>${nhan(UI.KET_QUA_BAI, b.ketQua)}</li>`).join('')}</ul>` : '<p class="phu">Chưa làm bài nào.</p>'}
-      <div class="hang-nut">${nutTrangThai(t)}${Store.coQuyen('them_tro_ly') ? `<button type="button" class="nut nut-phu nut-nho" data-act="cap-ma-moi" data-mssv="${esc(t.mssv)}">Cấp mã mới</button>` : ''}</div>`);
+      <div class="hang-nut">${nutTrangThai(t)}${Store.coQuyen('them_tro_ly') ? `<button type="button" class="nut nut-phu nut-nho" data-act="cap-ma-moi" data-mssv="${esc(t.mssv)}">Cấp mã mới</button>` : ''}${Store.coQuyen('xoa_tro_ly') ? `<button type="button" class="nut nut-phu nut-nho nut-xoa" data-act="xoa-tro-ly" data-mssv="${esc(t.mssv)}">Xóa trợ lý</button>` : ''}</div>`);
+  };
+
+  App.act['xoa-tro-ly'] = (el) => {
+    const t = Store.troLy(el.dataset.mssv);
+    moHop(`Xóa ${t.hoTen}`, `
+      <p>Xóa hẳn trợ lý này khỏi danh sách, cùng toàn bộ ca trực, giờ trực, bài kiểm tra, sổ nề nếp và đơn từ của người đó. Không khôi phục được.</p>
+      <p class="phu">Nếu trợ lý chỉ nghỉ hoặc ra trường, nên đổi trạng thái để giữ lại lịch sử.</p>
+      <form data-form="xoa-tro-ly" data-mssv="${esc(t.mssv)}">
+        <label>Nhập MSSV ${esc(t.mssv)} để xác nhận <input name="mssv" inputmode="numeric" autocomplete="off" required /></label>
+        <p id="loi-xoa-tro-ly" class="loi" role="alert" hidden></p>
+        <div class="hang-nut canh-phai"><button class="nut nut-xoa-dac">Xóa trợ lý</button></div>
+      </form>`);
+  };
+
+  App.form['xoa-tro-ly'] = async (f, el) => {
+    const t = Store.troLy(el.dataset.mssv);
+    const baoLoi = (noiDung) => {
+      const p = document.getElementById('loi-xoa-tro-ly');
+      p.hidden = false;
+      p.textContent = noiDung;
+    };
+    if (f.mssv.trim() !== t.mssv) return baoLoi('MSSV chưa khớp.');
+    if (Store.tuXa) {
+      try {
+        await DongBo.thucHien('xoaTroLy', { mssv: t.mssv });
+      } catch (loi) {
+        return baoLoi(loi.tuMayChu ? loi.message : 'Không kết nối được máy chủ.');
+      }
+    } else {
+      Object.assign(Store.state, L.boDuLieuTroLy((tap) => Store.state[tap], t.mssv));
+      Store.ghiNhatKy('Xóa trợ lý', t.mssv, t.hoTen);
+    }
+    App.xong(`Đã xóa ${t.hoTen}.`);
   };
 
   App.act['doi-trang-thai'] = async (el) => {

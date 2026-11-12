@@ -647,6 +647,7 @@
     { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, xem lịch đăng ký', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao'] },
     { ma: 'tro_ly', nhom: 'Vận hành', ten: 'Danh sách trợ lý: xem hồ sơ, đổi trạng thái, xuất Excel', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'them_tro_ly', nhom: 'Vận hành', ten: 'Thêm trợ lý và cấp mã vào web', trang: ['danh-sach'], tap: ['troLy'] },
+    { ma: 'xoa_tro_ly', nhom: 'Vận hành', ten: 'Xóa trợ lý khỏi danh sách, kèm toàn bộ dữ liệu của trợ lý đó', trang: ['danh-sach'] },
     { ma: 'duyet_don', nhom: 'Vận hành', ten: 'Duyệt đơn: xin vắng, đổi ca, chuyển máy, PTN hủy ca', trang: ['duyet-don'], tap: ['donVang', 'doiCa', 'deNghi', 'caTruc', 'troLy'] },
     { ma: 'ne_nep', nhom: 'Vận hành', ten: 'Ghi sổ nề nếp, xem cảnh báo, mở phản hồi', trang: ['so-ne-nep', 'canh-bao'], tap: ['soNeNep', 'deXuatMat'] },
     { ma: 'quyet_mat', nhom: 'Vận hành', ten: 'Quyết định mất tư cách, xóa ghi nhận nề nếp', trang: ['so-ne-nep', 'canh-bao'], tap: ['deXuatMat', 'troLy'], xoa: ['soNeNep'] },
@@ -672,8 +673,26 @@
   const coQuyen = (tk, ma) => quyenCua(tk).includes(ma);
   const duocGhi = (tk, tap, loai = 'tap') => QUYEN.some((q) => (q[loai] || []).includes(tap) && coQuyen(tk, q.ma));
 
+  /* Xóa trợ lý: bỏ hồ sơ cùng mọi dữ liệu gắn với MSSV đó; nhật ký giữ lại.
+     lay(tap) trả danh sách hiện có; kết quả chỉ gồm các tập có thay đổi. */
+  const TAP_CUA_TRO_LY = ['troLy', 'thoiKhoaBieu', 'caTruc', 'luotTruc', 'checklistCa', 'banGiao', 'soNeNep', 'baiLam', 'deXuatMat', 'donVang', 'doiCa',
+    'deNghi', 'thamGiaViec', 'danhGia', 'xepLoaiKy', 'caiSai', 'daDocTaiLieu', 'xacNhanNoiQuy', 'thamGiaBuoi'];
+  function boDuLieuTroLy(lay, mssv) {
+    const caIds = new Set((lay('caTruc') || []).filter((c) => c.mssv === mssv).map((c) => c.id));
+    const luotIds = new Set((lay('luotTruc') || []).filter((l) => l.mssv === mssv || caIds.has(l.caTrucId)).map((l) => l.id));
+    const thuoc = (r) => r.mssv === mssv || r.tuMssv === mssv || caIds.has(r.caTrucId) || luotIds.has(r.luotTrucId) || luotIds.has(r.id);
+    const kq = {};
+    TAP_CUA_TRO_LY.forEach((tap) => {
+      const ds = lay(tap);
+      if (!Array.isArray(ds)) return;
+      const con = ds.filter((r) => !thuoc(r));
+      if (con.length !== ds.length) kq[tap] = con;
+    });
+    return kq;
+  }
+
   return {
-    QUYEN, QUYEN_MAC_DINH, quyenCua, coQuyen, duocGhi,
+    QUYEN, QUYEN_MAC_DINH, quyenCua, coQuyen, duocGhi, boDuLieuTroLy,
     PHUT, GIO, NGAY, CAI_DAT_MAC_DINH, DOT_KIEM_TRA_MAC_DINH, CHECKLIST_MAC_DINH, DANH_MUC_LOI_MAC_DINH, CA_GIU_CHO,
     phut, hhmm, ngayKey, docNgay, mocGio, congNgay, dauTuan, hanKhoaTuan, tuanThu, hocKyHienTai, dotTuyenMo,
     soNguoiTrongKhung, kiemTraDangKyCa, loaiHuy, mucChecklist, checklistXong, danhGiaLuot,
