@@ -134,7 +134,7 @@
               <button type="button" class="${sau ? 'dang-chon' : ''}" data-act="doi-tuan-lich" data-tuan="sau" aria-pressed="${sau}">Tuần sau</button>
             </div>
           </div>
-          <p class="phu">${ngayDu(tuan).slice(0, 5)} – ${ngayDu(cacNgay[cacNgay.length - 1]).slice(0, 5)}: ${caTuan.length} ca, ${nguoi.length} trợ lý, ${soGioChu(tongGio)} giờ.${sau ? (Store.now() < L.hanKhoaTuan(tuan, st.caiDat) ? ` Trợ lý còn đăng ký, hủy được đến ${ngayGio(L.hanKhoaTuan(tuan, st.caiDat))}.` : ' Đã khóa đăng ký.') : ''}</p>
+          <p class="phu">${ngayDu(tuan).slice(0, 5)} – ${ngayDu(cacNgay[cacNgay.length - 1]).slice(0, 5)}: ${caTuan.length} ca, ${nguoi.length} trợ lý, ${soGioChu(tongGio)} giờ. Trợ lý đăng ký được đến ${st.caiDat.gioKhoaDangKy} hôm trước mỗi ca.</p>
         </section>
         ${cacNgay.map(theNgay).join('')}
         <section class="the">

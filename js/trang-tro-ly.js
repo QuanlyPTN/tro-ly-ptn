@@ -221,10 +221,13 @@
       if (ca.trangThai !== 'da_dang_ky') return `<section class="the">${dau}${nhan(UI.TRANG_THAI_CA, ca.trangThai)}</div></section>`;
       const chuaToi = now < moLuc;
       const daQua = now > hetLuc;
+      const phutTre = Math.floor((now - L.mocGio(ca.ngay, ca.tu)) / L.PHUT);
+      const tre = !daQua && phutTre > cfg.phutDungGio;
       return `
         <section class="the">
           ${dau}${nhan(UI.TRANG_THAI_CA, ca.trangThai)}</div>
           <p class="phu">${chuaToi ? `Bấm được từ ${gio(moLuc)}.` : daQua ? 'Ca đã kết thúc mà chưa bấm Bắt đầu. Liên hệ quản lý.' : 'Chỉ bấm khi bạn đã có mặt ở PTN.'}</p>
+          ${tre ? `<p class="loi">Bạn đang trễ ${phutTre} phút so với giờ ca. Vẫn bấm được; giờ trực tính từ lúc bấm và ca ghi nhận đi trễ.</p>` : ''}
           <button type="button" class="nut nut-lon" data-act="bat-dau-truc" data-id="${esc(ca.id)}"${chuaToi || daQua ? ' disabled' : ''}>Bắt đầu trực</button>
         </section>`;
     }
@@ -232,6 +235,7 @@
       return `
         <section class="the">
           ${dau}<span class="nhan nhan-luc">Đang trực từ ${gio(luot.batDau)}</span></div>
+          ${luot.batDau - L.mocGio(ca.ngay, ca.tu) > cfg.phutDungGio * L.PHUT ? `<p class="loi">Vào trễ ${Math.floor((luot.batDau - L.mocGio(ca.ngay, ca.tu)) / L.PHUT)} phút. Giờ trực tính từ ${gio(luot.batDau)}.</p>` : ''}
           <button type="button" class="nut nut-lon nut-xanh" data-act="ket-thuc-truc" data-id="${esc(luot.id)}">Kết thúc trực</button>
         </section>
         ${theChecklist(ca, luot)}`;
@@ -275,8 +279,12 @@
   App.act['bat-dau-truc'] = (el) => {
     const ca = Store.state.caTruc.find((c) => c.id === el.dataset.id);
     if (luotCuaCa(ca.id)) return;
-    Store.state.luotTruc.push({ id: Store.id('lt'), caTrucId: ca.id, mssv: ca.mssv, batDau: Store.now(), ketThuc: null, ketThucBoi: null, daDuyet: false });
-    App.xong(`Đã ghi giờ vào ${gio(Store.now())}.`);
+    const now = Store.now();
+    Store.state.luotTruc.push({ id: Store.id('lt'), caTrucId: ca.id, mssv: ca.mssv, batDau: now, ketThuc: null, ketThucBoi: null, daDuyet: false });
+    const phutTre = Math.floor((now - L.mocGio(ca.ngay, ca.tu)) / L.PHUT);
+    if (phutTre <= Store.state.caiDat.phutDungGio) return App.xong(`Đã ghi giờ vào ${gio(now)}.`);
+    App.xong();
+    thongBao(`Đã ghi giờ vào ${gio(now)}, trễ ${phutTre} phút so với ca ${ca.tu}. Ca ghi nhận đi trễ; giờ trực tính từ lúc bấm.`, 'loi');
   };
 
   App.act['ket-thuc-truc'] = async (el) => {
@@ -319,12 +327,14 @@
     });
   }
 
+  const conHan = (n) => Store.now() < L.hanDangKyNgay(n, Store.state.caiDat);
+
   const lichUi = () => {
     if (!App.ui.lich) {
-      const tuanSau = L.congNgay(L.dauTuan(homNay()), 7);
-      const dangKhoa = Store.now() >= L.hanKhoaTuan(tuanSau, Store.state.caiDat);
-      const tuan = dangKhoa ? L.congNgay(tuanSau, 7) : tuanSau;
-      App.ui.lich = { tuan, ngay: tuan, tu: '07:00', den: '09:00' };
+      // Mở ở tuần có ngày sớm nhất còn đăng ký được.
+      let ngayDau = L.congNgay(homNay(), 1);
+      while (!conHan(ngayDau)) ngayDau = L.congNgay(ngayDau, 1);
+      App.ui.lich = { tuan: L.dauTuan(ngayDau), ngay: ngayDau, tu: '07:00', den: '09:00' };
     }
     return App.ui.lich;
   };
@@ -340,15 +350,16 @@
       const o = ngayTuan.map((n) => {
         const soNguoi = L.soNguoiTrongKhung(st, n, p);
         const cuaMinh = cuaToi.some((c) => c.ngay === n && L.phut(c.tu) <= p && p < L.phut(c.den));
-        const hoc = tkb.some((m) => m.thu === L.docNgay(n).getDay() && L.phut(m.tu) <= p && p < L.phut(m.den));
-        const lop = cuaMinh ? 'o-cua-toi' : hoc ? 'o-hoc' : soNguoi ? 'o-co' : '';
-        const moTa = `${ngay(n)}, ${L.hhmm(p)}: ${soNguoi} người đã đăng ký${cuaMinh ? ', ca của bạn' : ''}${hoc ? ', trùng lịch học' : ''}`;
-        return `<td><button type="button" class="o-khung ${lop}" data-act="chon-khung" data-ngay="${n}" data-tu="${L.hhmm(p)}" aria-label="${moTa}" title="${moTa}">${soNguoi}</button></td>`;
+        const hoc = tkb.some((m) => m.thu === L.thuCua(n) && L.phut(m.tu) <= p && p < L.phut(m.den));
+        const het = !conHan(n);
+        const lop = cuaMinh ? 'o-cua-toi' : het ? 'o-het-han' : hoc ? 'o-hoc' : soNguoi ? 'o-co' : '';
+        const moTa = `${ngay(n)}, ${L.hhmm(p)}: ${soNguoi} người đã đăng ký${cuaMinh ? ', ca của bạn' : ''}${het ? ', hết hạn đăng ký' : hoc ? ', trùng lịch học' : ''}`;
+        return `<td><button type="button" class="o-khung ${lop}" data-act="chon-khung" data-ngay="${n}" data-tu="${L.hhmm(p)}" aria-label="${moTa}" title="${moTa}"${het ? ' disabled' : ''}>${soNguoi}</button></td>`;
       }).join('');
       return `<tr><th scope="row">${L.hhmm(p)}</th>${o}</tr>`;
     }).join('');
     return `<div class="cuon-ngang"><table class="bang-khung"><thead><tr><th></th>${dau}</tr></thead><tbody>${dong}</tbody></table></div>
-      <p class="chu-thich"><span class="o-mau o-cua-toi"></span>Ca của bạn <span class="o-mau o-co"></span>Có người <span class="o-mau o-hoc"></span>Trùng lịch học</p>`;
+      <p class="chu-thich"><span class="o-mau o-cua-toi"></span>Ca của bạn <span class="o-mau o-co"></span>Có người <span class="o-mau o-hoc"></span>Trùng lịch học <span class="o-mau o-het-han"></span>Hết hạn đăng ký</p>`;
   }
 
   App.trang['lich-truc'] = {
@@ -359,9 +370,8 @@
       const st = Store.state;
       const cfg = st.caiDat;
       const ui = lichUi();
-      const han = L.hanKhoaTuan(ui.tuan, cfg);
-      const khoa = Store.now() >= han;
-      const cacNgay = cfg.thuLamViec.map((thu) => L.congNgay(ui.tuan, thu - 1));
+      const cacNgay = cfg.thuLamViec.map((thu) => L.congNgay(ui.tuan, thu - 1)).filter(conHan);
+      const khoa = !cacNgay.length;
       const gioChon = [];
       cfg.buoi.forEach((b) => {
         for (let p = L.phut(b.tu); p <= L.phut(b.den); p += cfg.buocPhut) gioChon.push(L.hhmm(p));
@@ -379,7 +389,7 @@
               <button type="button" class="nut nut-phu nut-nho" data-act="doi-tuan" data-buoc="7" aria-label="Tuần sau">›</button>
             </div>
           </div>
-          <p class="phu">${khoa ? 'Tuần này đã khóa đăng ký.' : `Khóa đăng ký lúc ${ngayGio(han)}.`} Mỗi lần tối thiểu ${cfg.phutToiThieuCa / 60} giờ, chọn một ô để điền nhanh.</p>
+          <p class="phu">${khoa ? 'Tuần này đã hết hạn đăng ký.' : `Đăng ký trước ${cfg.gioKhoaDangKy} của ngày hôm trước ca trực.`} Mỗi lần tối thiểu ${cfg.phutToiThieuCa / 60} giờ, chọn một ô để điền nhanh.</p>
           ${bangKhung(ui, t)}
           <form data-form="dang-ky-ca" class="luoi-form cot-4">
             <label>Ngày <select name="ngay">${opt(cacNgay, ui.ngay, ngay)}</select></label>

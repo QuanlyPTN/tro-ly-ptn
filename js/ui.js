@@ -70,7 +70,7 @@
   const ngay = (key) => {
     if (!key) return '–';
     const d = L.docNgay(key);
-    return `${THU[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `${THU[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   };
   const ngayDu = (key) => (key ? key.split('-').reverse().join('/') : '–');
   const gio = (ms) => (ms ? new Date(ms).toTimeString().slice(0, 5) : '–');

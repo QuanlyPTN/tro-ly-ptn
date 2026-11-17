@@ -14,7 +14,7 @@
     ['Hệ thống', ['tai-khoan', 'cai-dat', 'nhat-ky', 'doi-mat-khau', 'dang-nhap']]
   ];
   const MO_TA = {
-    'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực cho tuần sau', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
+    'trang-chu': 'Tình hình của bạn trong học kỳ', 'ca-hom-nay': 'Bắt đầu, kết thúc trực và checklist cuối ca', 'lich-truc': 'Chọn khung trực, đăng ký trước ca 1 ngày', 'viec-cua-toi': 'Việc được giao, việc đột xuất và điểm cộng đồng',
     'thong-bao': 'Tin từ PTN và nhắc việc', 'xin-vang': 'Gửi đơn và theo dõi duyệt', 'tap-huan': 'Bài kiểm tra và ôn luyện', 'tai-lieu': 'Đọc hiểu trước khi làm bài',
     'noi-quy': 'Quy định đối với trợ lý', 'tien-do': 'Chỉ số học kỳ và mức xếp loại', 'thong-tin': 'Hồ sơ và thời khóa biểu', 'dang-ky': 'Nhập mã hoặc đăng ký mới', 'dang-nhap': 'Dành cho quản lý và Admin',
     'tong-quan': 'Tình hình PTN hôm nay', 'bang-ca': 'Theo dõi ca và duyệt giờ trực', 'lich-dang-ky': 'Ai trực ca nào trong tuần này và tuần sau', 'danh-sach': 'Hồ sơ, bộ lọc và xuất Excel', 'duyet-don': 'Xác nhận trợ lý, xin vắng, đổi ca, chuyển máy',

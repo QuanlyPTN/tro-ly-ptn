@@ -300,7 +300,7 @@ Không đủ thiết bị, dụng cụ thì ưu tiên: lớp thực hành, rồi
   const TK = 'Quy định nề nếp Trợ lý PTN';
 
   const noiQuy = [
-    muc('nq-01', 'Lịch trực và chuyên cần', 1, 'Đăng ký khung trực trước 20:00 Chủ nhật cho tuần sau; mỗi lần tối thiểu 2 giờ, trong giờ PTN, Thứ 2 – Thứ 7.', 'Quá hạn không đăng ký được', TK),
+    muc('nq-01', 'Lịch trực và chuyên cần', 1, 'Đăng ký khung trực trong tuần này hoặc tuần sau, trước 20:00 của ngày hôm trước ca trực; mỗi lần tối thiểu 2 giờ, trong giờ PTN, Thứ 2 – Thứ 7.', 'Quá hạn không đăng ký được', TK),
     muc('nq-02', 'Lịch trực và chuyên cần', 2, 'Đi đúng lịch đã đăng ký. Không trực được thì hủy trước 24 giờ, xin vắng có minh chứng hoặc nhờ bạn đổi ca.', 'Hủy trong 24 giờ: hủy muộn, 2 lần tính 1 ca bỏ. Vắng không báo: bỏ ca', `${LV}, ${TK}`),
     muc('nq-03', 'Lịch trực và chuyên cần', 3, 'Chỉ bấm Bắt đầu trực khi đã có mặt ở PTN.', NANG, TK),
     muc('nq-04', 'Lịch trực và chuyên cần', 4, 'Đến đúng giờ: trễ không quá 10 phút. Trực đủ: trễ không quá 30 phút, ra sớm không quá 15 phút, đã làm checklist.', 'Không đủ điều kiện: ca không tính vào tỷ lệ tham gia', TK),

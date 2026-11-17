@@ -129,11 +129,11 @@
     const hk = st.hocKy[0].id;
     const ngayLam = (n) => {
       let k = L.congNgay(homNay, n);
-      while (!st.caiDat.thuLamViec.includes(L.docNgay(k).getDay())) k = L.congNgay(k, n < 0 ? -1 : 1);
+      while (!st.caiDat.thuLamViec.includes(L.thuCua(k))) k = L.congNgay(k, n < 0 ? -1 : 1);
       return k;
     };
     const homTruoc = ngayLam(-1);
-    if (st.caiDat.thuLamViec.includes(L.docNgay(homNay).getDay())) {
+    if (st.caiDat.thuLamViec.includes(L.thuCua(homNay))) {
       st.caTruc.push(
         { id: taoId('ca'), mssv: '2200100002', ngay: homNay, tu: '08:00', den: '11:30', trangThai: 'da_dang_ky', hocKyId: hk },
         { id: taoId('ca'), mssv: '2200100003', ngay: homNay, tu: '13:00', den: '16:30', trangThai: 'da_dang_ky', hocKyId: hk }

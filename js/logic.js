@@ -72,24 +72,28 @@
     return h * 60 + m;
   };
   const hhmm = (soPhut) => `${String(Math.floor(soPhut / 60)).padStart(2, '0')}:${String(soPhut % 60).padStart(2, '0')}`;
-  const ngayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  /* Mọi ngày giờ tính theo giờ Việt Nam (UTC+7, không đổi giờ mùa hè), không theo múi giờ của máy chạy:
+     máy chủ Cloudflare chạy giờ UTC. docNgay trả 00:00 UTC của ngày đó, đọc bằng getUTC*. */
+  const LECH_VN = 7 * 60 * 60000;
+  const ngayKey = (d) => {
+    const v = new Date(d.getTime() + LECH_VN);
+    return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, '0')}-${String(v.getUTCDate()).padStart(2, '0')}`;
+  };
   const docNgay = (key) => {
     const [y, m, d] = key.split('-').map(Number);
-    return new Date(y, m - 1, d);
+    return new Date(Date.UTC(y, m - 1, d));
   };
-  const mocGio = (key, gio) => {
-    const d = docNgay(key);
-    d.setMinutes(phut(gio));
-    return d.getTime();
-  };
+  const thuCua = (key) => docNgay(key).getUTCDay();
+  const mocGio = (key, gio) => docNgay(key).getTime() - LECH_VN + phut(gio) * 60000;
   const congNgay = (key, n) => {
     const d = docNgay(key);
-    d.setDate(d.getDate() + n);
+    d.setUTCDate(d.getUTCDate() + n);
     return ngayKey(d);
   };
-  const dauTuan = (key) => congNgay(key, -((docNgay(key).getDay() + 6) % 7));
-  const hanKhoaTuan = (key, cfg) => mocGio(congNgay(dauTuan(key), -1), cfg.gioKhoaDangKy);
-  const tuanThu = (hocKy, nowMs) => Math.floor((nowMs - docNgay(hocKy.tuNgay).getTime()) / (7 * NGAY)) + 1;
+  const dauTuan = (key) => congNgay(key, -((thuCua(key) + 6) % 7));
+  // Ca của ngày nào chỉ đăng ký được đến giờ khóa của ngày hôm trước (mặc định 20:00).
+  const hanDangKyNgay = (key, cfg) => mocGio(congNgay(key, -1), cfg.gioKhoaDangKy);
+  const tuanThu = (hocKy, nowMs) => Math.floor((nowMs - mocGio(hocKy.tuNgay, '00:00')) / (7 * NGAY)) + 1;
   const hocKyHienTai = (st, nowMs) => {
     const key = ngayKey(new Date(nowMs));
     return st.hocKy.find((k) => k.tuNgay <= key && key <= k.denNgay) || st.hocKy[st.hocKy.length - 1];
@@ -115,13 +119,13 @@
     const canhBao = [];
     const a = phut(yc.tu);
     const b = phut(yc.den);
-    const thu = docNgay(yc.ngay).getDay();
+    const thu = thuCua(yc.ngay);
 
     if (!cfg.thuLamViec.includes(thu)) loi.push('PTN chỉ làm việc từ Thứ 2 đến Thứ 7.');
     if (!cfg.buoi.some((x) => a >= phut(x.tu) && b <= phut(x.den))) loi.push('Khung giờ phải nằm trọn trong buổi sáng hoặc buổi chiều.');
     if (b - a < cfg.phutToiThieuCa) loi.push(`Mỗi lần trực tối thiểu ${cfg.phutToiThieuCa / 60} giờ.`);
     if (a % cfg.buocPhut || b % cfg.buocPhut) loi.push(`Giờ chọn theo bước ${cfg.buocPhut} phút.`);
-    if (nowMs >= hanKhoaTuan(yc.ngay, cfg)) loi.push('Đã qua hạn đăng ký của tuần này (khóa 20:00 Chủ nhật tuần trước).');
+    if (nowMs >= hanDangKyNgay(yc.ngay, cfg)) loi.push(`Đã qua hạn đăng ký ngày này. Ca phải đăng ký trước ${cfg.gioKhoaDangKy} hôm trước.`);
 
     const caCuaToi = st.caTruc.filter((c) => c.mssv === yc.mssv && c.ngay === yc.ngay && CA_GIU_CHO.includes(c.trangThai));
     if (caCuaToi.some((c) => giao(a, b, phut(c.tu), phut(c.den)))) loi.push('Bạn đã có ca trùng khung giờ này.');
@@ -299,7 +303,7 @@
     if (nowMs >= mocGio(ca.ngay, ca.tu)) loi.push('Ca này đã bắt đầu.');
     const caCuaToi = st.caTruc.filter((c) => c.mssv === mssv && c.ngay === ca.ngay && CA_GIU_CHO.includes(c.trangThai));
     if (caCuaToi.some((c) => giao(a, b, phut(c.tu), phut(c.den)))) loi.push('Bạn đã có ca trùng khung giờ này.');
-    const thu = docNgay(ca.ngay).getDay();
+    const thu = thuCua(ca.ngay);
     const canhBao = st.thoiKhoaBieu
       .filter((m) => m.mssv === mssv && m.thu === thu && giao(a, b, phut(m.tu), phut(m.den)))
       .map((m) => `Trùng lịch học: ${m.monHoc} (${m.tu}–${m.den}).`);
@@ -321,7 +325,7 @@
     if (khung) {
       const a = phut(khung.tu);
       const b = phut(khung.den);
-      const thu = docNgay(viec.ngay).getDay();
+      const thu = thuCua(viec.ngay);
       st.thoiKhoaBieu.filter((m) => m.mssv === mssv && m.thu === thu && giao(a, b, phut(m.tu), phut(m.den)))
         .forEach((m) => canhBao.push(`Trùng lịch học: ${m.monHoc}.`));
       st.caTruc.filter((c) => c.mssv === mssv && c.ngay === viec.ngay && CA_GIU_CHO.includes(c.trangThai) && giao(a, b, phut(c.tu), phut(c.den)))
@@ -398,9 +402,9 @@
       if (con > 0 && con <= GIO) nhac.push(`Ca ${c.tu}–${c.den} bắt đầu trong vòng 1 giờ.`);
     });
     const tuanSau = congNgay(dauTuan(ngayKey(new Date(nowMs))), 7);
-    const conHan = hanKhoaTuan(tuanSau, cfg) - nowMs;
+    const conHan = hanDangKyNgay(tuanSau, cfg) - nowMs;
     const coCaTuanSau = st.caTruc.some((c) => c.mssv === mssv && c.ngay >= tuanSau && c.ngay < congNgay(tuanSau, 7) && CA_GIU_CHO.includes(c.trangThai));
-    if (conHan > 0 && conHan <= 2 * NGAY && !coCaTuanSau) nhac.push('Bạn chưa đăng ký ca tuần sau, sắp đến hạn khóa.');
+    if (conHan > 0 && conHan <= 2 * NGAY && !coCaTuanSau) nhac.push('Bạn chưa đăng ký ca tuần sau.');
     st.thamGiaViec.filter((t) => t.mssv === mssv && ['da_giao', 'da_nhan', 'dang_lam'].includes(t.trangThai)).forEach((t) => {
       const v = st.viec.find((x) => x.id === t.viecId);
       const con = mocGio(congNgay(v.hanHoanThanh, 1), '00:00') - nowMs;
@@ -694,7 +698,7 @@
   return {
     QUYEN, QUYEN_MAC_DINH, quyenCua, coQuyen, duocGhi, boDuLieuTroLy,
     PHUT, GIO, NGAY, CAI_DAT_MAC_DINH, DOT_KIEM_TRA_MAC_DINH, CHECKLIST_MAC_DINH, DANH_MUC_LOI_MAC_DINH, CA_GIU_CHO,
-    phut, hhmm, ngayKey, docNgay, mocGio, congNgay, dauTuan, hanKhoaTuan, tuanThu, hocKyHienTai, dotTuyenMo,
+    phut, hhmm, ngayKey, docNgay, thuCua, mocGio, congNgay, dauTuan, hanDangKyNgay, tuanThu, hocKyHienTai, dotTuyenMo,
     soNguoiTrongKhung, kiemTraDangKyCa, loaiHuy, mucChecklist, checklistXong, danhGiaLuot,
     tinhChiSo, trangThaiNeNep, tieuChiXepLoai, goiYDanhGia, diemDanhGiaTB, xepLoaiKy, TIEU_CHI_DANH_GIA,
     kiemTraNhanCa, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,
