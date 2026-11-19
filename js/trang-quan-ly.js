@@ -21,7 +21,7 @@
       : !l ? (Store.now() > L.mocGio(c.ngay, c.tu) ? '<span class="nhan nhan-do">Chưa đến</span>' : '<span class="nhan nhan-xam">Sắp tới</span>')
       : !l.ketThuc ? `<span class="nhan nhan-luc">Đang trực từ ${gio(l.batDau)}</span>`
       : '<span class="nhan nhan-vang">Chờ duyệt</span>';
-    return `<tr><td><span class="dong-nguoi">${avatar(tenTroLy(c.mssv))}${esc(tenTroLy(c.mssv))}</span></td><td>${c.tu}–${c.den}</td><td>${tt}</td></tr>`;
+    return `<tr><td><span class="dong-nguoi">${avatar(tenTroLy(c.mssv))}${esc(tenTroLy(c.mssv))}</span></td><td>${c.tu}–${c.den}${c.dotXuat ? ' <span class="nhan nhan-xam">Đột xuất</span>' : ''}</td><td>${tt}</td></tr>`;
   }
 
   function dongChoDuyet(l) {
@@ -70,7 +70,7 @@
       const thieu = khungThieuNguoi();
       return `
         <section class="the">
-          <h2>${ngay(hn)}</h2>
+          <div class="hang-dau"><h2>${ngay(hn)}</h2>${Store.coQuyen('ca_truc') ? '<button type="button" class="nut nut-nho" data-act="them-ca-dot-xuat">Thêm ca đột xuất</button>' : ''}</div>
           ${caHomNay.length ? `<div class="cuon-ngang"><table class="bang"><thead><tr><th>Trợ lý</th><th>Ca</th><th>Trạng thái</th></tr></thead><tbody>${caHomNay.map(dongCaHomNay).join('')}</tbody></table></div>` : '<p class="phu">Hôm nay chưa có ai đăng ký ca.</p>'}
         </section>
         <section class="the">
@@ -92,6 +92,57 @@
           <p class="phu">${thieu.length ? esc(thieu.join(', ')) : 'Tất cả các buổi đã có người đăng ký.'}</p>
         </section>`;
     }
+  };
+
+  /* ---------- Ca đột xuất: trợ lý lên trực không đăng ký trước ---------- */
+  const DANG_TRUC = ['thu_viec', 'dang_hoat_dong'];
+  const gioPhut = (ms) => { const g = gio(ms); return `${g.slice(0, 3)}${String(Math.floor(Number(g.slice(3)) / 5) * 5).padStart(2, '0')}`; };
+  const congPhut = (hhmm, n) => { const p = Math.min(L.phut(hhmm) + n, 23 * 60 + 55); return `${String(Math.floor(p / 60)).padStart(2, '0')}:${String(p % 60).padStart(2, '0')}`; };
+
+  App.act['them-ca-dot-xuat'] = (el) => {
+    const ds = Store.state.troLy.filter((t) => DANG_TRUC.includes(t.trangThai)).sort((a, b) => a.hoTen.localeCompare(b.hoTen, 'vi'));
+    const tu = gioPhut(Store.now());
+    moHop('Thêm ca đột xuất', `
+      <p class="phu">${ngay(homNay())}. Ca ghi thẳng vào lịch, không cần trợ lý đăng ký trước.</p>
+      <form data-form="them-ca-dot-xuat">
+        <h3>Trợ lý lên trực</h3>
+        ${ds.length ? `<ul class="ds-checklist ds-chon-nguoi">${ds.map((t) => `<li><label class="o-chon"><input type="checkbox" name="chon_${esc(t.mssv)}"${t.mssv === el.dataset.mssv ? ' checked' : ''} /><span>${esc(t.hoTen)} <span class="phu">${esc(t.mssv)}</span></span></label></li>`).join('')}</ul>` : '<p class="phu">Chưa có trợ lý đang hoạt động hoặc thử việc.</p>'}
+        <p class="phu">Chưa có tên trong danh sách? ${Store.coQuyen('them_tro_ly') ? '<button type="button" class="nut nut-phu nut-nho" data-act="them-tro-ly">Thêm trợ lý mới</button>' : 'Nhờ người có quyền Thêm trợ lý thêm trước.'}</p>
+        <div class="luoi-form">
+          <label>Từ <input type="time" name="tu" value="${tu}" required /></label>
+          <label>Đến <input type="time" name="den" value="${congPhut(tu, 120)}" required /></label>
+        </div>
+        <label class="o-chon"><input type="checkbox" name="batDauNgay" checked /><span>Trợ lý đã có mặt: tính giờ trực từ giờ "Từ". Bỏ chọn thì trợ lý tự bấm Bắt đầu trực trên điện thoại.</span></label>
+        <p id="loi-ca-dot-xuat" class="loi" role="alert" hidden></p>
+        <div class="hang-nut canh-phai"><button class="nut">Thêm vào ca</button></div>
+      </form>`);
+  };
+
+  App.form['them-ca-dot-xuat'] = (f) => {
+    const st = Store.state;
+    const now = Store.now();
+    const hn = homNay();
+    const baoLoi = (noiDung) => {
+      const p = document.getElementById('loi-ca-dot-xuat');
+      p.hidden = false;
+      p.textContent = noiDung;
+    };
+    const chon = Object.keys(f).filter((k) => k.startsWith('chon_')).map((k) => k.slice(5));
+    if (!chon.length) return baoLoi('Chưa chọn trợ lý nào.');
+    if (L.phut(f.den) <= L.phut(f.tu)) return baoLoi('Giờ "Đến" phải sau giờ "Từ".');
+    const batDauNgay = 'batDauNgay' in f;
+    const vao = L.mocGio(hn, f.tu);
+    if (batDauNgay && vao > now) return baoLoi('Giờ "Từ" chưa tới. Sửa giờ, hoặc bỏ chọn ô "Trợ lý đã có mặt".');
+    const trung = chon.filter((m) => st.caTruc.some((c) => c.mssv === m && c.ngay === hn && L.CA_GIU_CHO.includes(c.trangThai) && L.phut(c.tu) < L.phut(f.den) && L.phut(f.tu) < L.phut(c.den)));
+    if (trung.length) return baoLoi(`Trùng giờ với ca đã có hôm nay: ${trung.map(tenTroLy).join(', ')}.`);
+    const hk = L.hocKyHienTai(st, now);
+    chon.forEach((mssv) => {
+      const ca = { id: Store.id('ca'), mssv, ngay: hn, tu: f.tu, den: f.den, trangThai: 'da_dang_ky', hocKyId: hk.id, dotXuat: true, taoBoi: Store.nguoiDung().id };
+      st.caTruc.push(ca);
+      if (batDauNgay) st.luotTruc.push({ id: Store.id('lt'), caTrucId: ca.id, mssv, batDau: vao, ketThuc: null, ketThucBoi: null, daDuyet: false, ghiVaoBoi: Store.nguoiDung().id });
+      Store.ghiNhatKy('Thêm ca đột xuất', mssv, `${hn} ${f.tu}–${f.den}${batDauNgay ? ', tính giờ từ ' + f.tu : ''}`);
+    });
+    App.xong(`Đã thêm ${chon.length} trợ lý vào ca ${f.tu}–${f.den}.`);
   };
 
   /* ---------- Lịch đăng ký tuần này, tuần sau ---------- */
@@ -117,7 +168,7 @@
         x.soGio += soGioCa(c);
       });
       const tongGio = caTuan.reduce((s, c) => s + soGioCa(c), 0);
-      const dongCa = (c) => `<li><span><span class="gio-ca">${c.tu}–${c.den}</span> ${esc(tenTroLy(c.mssv))}</span>${c.trangThai === 'da_dang_ky' ? '' : nhan(UI.TRANG_THAI_CA, c.trangThai)}</li>`;
+      const dongCa = (c) => `<li><span><span class="gio-ca">${c.tu}–${c.den}</span> ${esc(tenTroLy(c.mssv))}${c.dotXuat ? ' <span class="nhan nhan-xam">Đột xuất</span>' : ''}</span>${c.trangThai === 'da_dang_ky' ? '' : nhan(UI.TRANG_THAI_CA, c.trangThai)}</li>`;
       const theNgay = (n) => {
         const buoi = st.caiDat.buoi.map((b) => {
           const ds = caTuan.filter((c) => c.ngay === n && L.phut(c.tu) < L.phut(b.den) && L.phut(c.den) > L.phut(b.tu));
@@ -353,7 +404,8 @@
     </form>`);
 
   const hienMa = (t) => moHop('Mã của trợ lý', `<p>${esc(t.hoTen)}, MSSV ${esc(t.mssv)}.</p><p class="ma-vao">Mã: <b>${esc(t.maKichHoat)}</b></p>
-    <p class="phu">Trợ lý mở web, nhập mã này là vào được. Mã chỉ dùng một lần.</p>`);
+    <p class="phu">Trợ lý mở web, nhập mã này là vào được. Mã chỉ dùng một lần.</p>
+    ${Store.coQuyen('ca_truc') && ['thu_viec', 'dang_hoat_dong'].includes(t.trangThai) ? `<div class="hang-nut canh-phai"><button type="button" class="nut nut-phu" data-act="them-ca-dot-xuat" data-mssv="${esc(t.mssv)}">Cho lên trực ngay</button></div>` : ''}`);
 
   App.form['them-tro-ly'] = (f) => {
     const mssv = f.mssv.trim();
