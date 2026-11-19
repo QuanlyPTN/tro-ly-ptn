@@ -49,6 +49,7 @@
     const thieu = [];
     st.caiDat.thuLamViec.forEach((thu) => {
       const n = L.congNgay(tuan, thu - 1);
+      if (L.ngayNghiCua(st, n)) return;
       st.caiDat.buoi.forEach((b) => {
         const coNguoi = st.caTruc.some((c) => c.ngay === n && L.CA_GIU_CHO.includes(c.trangThai) && L.phut(c.tu) < L.phut(b.den) && L.phut(c.den) > L.phut(b.tu));
         if (!coNguoi) thieu.push(`${ngay(n)} ${b.ten.toLowerCase()}`);
@@ -170,6 +171,8 @@
       const tongGio = caTuan.reduce((s, c) => s + soGioCa(c), 0);
       const dongCa = (c) => `<li><span><span class="gio-ca">${c.tu}–${c.den}</span> ${esc(tenTroLy(c.mssv))}${c.dotXuat ? ' <span class="nhan nhan-xam">Đột xuất</span>' : ''}</span>${c.trangThai === 'da_dang_ky' ? '' : nhan(UI.TRANG_THAI_CA, c.trangThai)}</li>`;
       const theNgay = (n) => {
+        const nghi = L.ngayNghiCua(st, n);
+        if (nghi) return `<section class="the"><div class="hang-dau"><h2>${ngay(n)}</h2><span class="nhan nhan-xam">PTN nghỉ</span></div><p class="phu">${esc(nghi.lyDo || 'Không nhận đăng ký ca.')}</p></section>`;
         const buoi = st.caiDat.buoi.map((b) => {
           const ds = caTuan.filter((c) => c.ngay === n && L.phut(c.tu) < L.phut(b.den) && L.phut(c.den) > L.phut(b.tu));
           return `<div><h3>${esc(b.ten)} (${ds.length})</h3>${ds.length ? `<ul class="ds-gon">${ds.map(dongCa).join('')}</ul>` : '<p class="phu"><span class="nhan nhan-do">Chưa có người</span></p>'}</div>`;
@@ -188,11 +191,65 @@
           <p class="phu">${ngayDu(tuan).slice(0, 5)} – ${ngayDu(cacNgay[cacNgay.length - 1]).slice(0, 5)}: ${caTuan.length} ca, ${nguoi.length} trợ lý, ${soGioChu(tongGio)} giờ. Trợ lý đăng ký được đến ${st.caiDat.gioKhoaDangKy} hôm trước mỗi ca.</p>
         </section>
         ${cacNgay.map(theNgay).join('')}
+        ${theNgayNghi()}
         <section class="the">
           <h2>Theo trợ lý</h2>
           ${nguoi.length ? `<div class="cuon-ngang"><table class="bang"><thead><tr><th>Trợ lý</th><th>Số ca</th><th>Số giờ</th></tr></thead><tbody>${nguoi.map((m) => `<tr><td><span class="dong-nguoi">${avatar(tenTroLy(m))}${esc(tenTroLy(m))}</span></td><td>${theoNguoi[m].soCa}</td><td>${soGioChu(theoNguoi[m].soGio)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="phu">Chưa có ai đăng ký tuần này.</p>'}
         </section>`;
     }
+  };
+
+  /* ---------- Ngày PTN nghỉ: khóa đăng ký ca ---------- */
+  function theNgayNghi() {
+    const hn = homNay();
+    const ds = Store.state.ngayNghi.filter((n) => n.ngay >= hn).sort((a, b) => a.ngay.localeCompare(b.ngay));
+    const sua = Store.coQuyen('ca_truc');
+    return `
+      <section class="the">
+        <h2>Ngày PTN nghỉ</h2>
+        <p class="phu">Ngày đã khóa thì trợ lý không đăng ký hay nhận đổi ca được.</p>
+        ${ds.length ? `<ul class="ds-gon">${ds.map((n) => `<li><span><strong>${ngay(n.ngay)}</strong>${n.lyDo ? ` · ${esc(n.lyDo)}` : ''}</span>${sua ? `<button type="button" class="nut nut-phu nut-nho" data-act="mo-ngay-nghi" data-ngay="${esc(n.ngay)}">Mở lại</button>` : ''}</li>`).join('')}</ul>` : '<p class="phu">Chưa khóa ngày nào.</p>'}
+        ${sua ? `<form data-form="khoa-ngay-nghi" class="luoi-form cot-4">
+          <label>Từ ngày <input type="date" name="tuNgay" min="${hn}" required /></label>
+          <label>Đến ngày <input type="date" name="denNgay" min="${hn}" /></label>
+          <label>Lý do <input name="lyDo" placeholder="VD: Nghỉ lễ" /></label>
+          <div class="canh-day"><button class="nut">Khóa các ngày này</button></div>
+        </form>` : ''}
+      </section>`;
+  }
+
+  App.form['khoa-ngay-nghi'] = async (f) => {
+    const st = Store.state;
+    const den = f.denNgay || f.tuNgay;
+    if (den < f.tuNgay) return thongBao('"Đến ngày" phải từ "Từ ngày" trở đi.', 'loi');
+    const cacNgay = [];
+    for (let n = f.tuNgay; n <= den && cacNgay.length <= 366; n = L.congNgay(n, 1)) if (!L.ngayNghiCua(st, n)) cacNgay.push(n);
+    if (!cacNgay.length) return thongBao('Các ngày này đã khóa rồi.', 'loi');
+    if (cacNgay.length > 366) return thongBao('Mỗi lần khóa tối đa 1 năm.', 'loi');
+    const lyDo = f.lyDo.trim();
+    const coLuot = new Set(st.luotTruc.map((l) => l.caTrucId));
+    const caBiHuy = st.caTruc.filter((c) => cacNgay.includes(c.ngay) && c.trangThai === 'da_dang_ky' && !coLuot.has(c.id));
+    const moTa = cacNgay.length === 1 ? ngay(cacNgay[0]) : `${cacNgay.length} ngày, ${ngay(cacNgay[0])} đến ${ngay(cacNgay[cacNgay.length - 1])}`;
+    const hoi = caBiHuy.length
+      ? `Khóa ${moTa}? Đã có ${caBiHuy.length} ca đăng ký trong những ngày này; các ca đó sẽ chuyển sang "PTN hủy", không tính cho ai, và trợ lý nhận thông báo.`
+      : `Khóa ${moTa}? Trợ lý sẽ không đăng ký ca được vào những ngày này.`;
+    if (!(await xacNhan(hoi, 'Khóa ngày'))) return;
+    cacNgay.forEach((n) => st.ngayNghi.push({ ngay: n, lyDo, nguoiTao: Store.nguoiDung().id, luc: Store.now() }));
+    caBiHuy.forEach((c) => {
+      c.trangThai = 'ptn_huy';
+      App.dongDonCuaCa?.(c.id);
+    });
+    Store.ghiNhatKy('Khóa ngày PTN nghỉ', moTa, `${lyDo || 'Không ghi lý do'}${caBiHuy.length ? `; hủy ${caBiHuy.length} ca` : ''}`);
+    if (caBiHuy.length) Store.guiThongBao({ tieuDe: 'PTN nghỉ, ca của bạn đã được hủy', noiDung: `${moTa}${lyDo ? `: ${lyDo}` : ''}. Ca không tính vắng.`, nguoiNhan: [...new Set(caBiHuy.map((c) => c.mssv))] });
+    App.xong(`Đã khóa ${moTa}.`);
+  };
+
+  App.act['mo-ngay-nghi'] = async (el) => {
+    const st = Store.state;
+    if (!(await xacNhan(`Mở lại ${ngay(el.dataset.ngay)} cho trợ lý đăng ký ca? Ca đã bị hủy trước đó không tự khôi phục.`, 'Mở lại'))) return;
+    st.ngayNghi = st.ngayNghi.filter((n) => n.ngay !== el.dataset.ngay);
+    Store.ghiNhatKy('Mở lại ngày PTN nghỉ', el.dataset.ngay, '');
+    App.xong(`Đã mở lại ${ngay(el.dataset.ngay)}.`);
   };
 
   App.act['doi-tuan-lich'] = (el) => {

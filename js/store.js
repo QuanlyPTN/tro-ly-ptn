@@ -31,7 +31,7 @@
   });
 
   /* Bộ sưu tập thêm ở giai đoạn 2; dữ liệu đã lưu từ bản trước được bổ sung khi mở app. */
-  const BO_SUU_TAP_MOI = ['donVang', 'doiCa', 'deNghi', 'thongBao', 'viec', 'thamGiaViec', 'danhGia', 'xepLoaiKy', 'daDocTaiLieu', 'xacNhanNoiQuy', 'buoiKhaoSat', 'thamGiaBuoi'];
+  const BO_SUU_TAP_MOI = ['donVang', 'doiCa', 'deNghi', 'thongBao', 'viec', 'thamGiaViec', 'danhGia', 'xepLoaiKy', 'daDocTaiLieu', 'xacNhanNoiQuy', 'buoiKhaoSat', 'thamGiaBuoi', 'ngayNghi'];
 
   let dem = 0;
   const taoId = (tienTo) => `${tienTo}-${Date.now().toString(36)}-${(dem++).toString(36)}`;

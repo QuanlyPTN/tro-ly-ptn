@@ -113,6 +113,10 @@
     ).length;
   }
 
+  // Ngày PTN nghỉ do quản lý khóa: không nhận đăng ký ca mới.
+  const ngayNghiCua = (st, key) => (st.ngayNghi || []).find((n) => n.ngay === key) || null;
+  const loiNgayNghi = (n) => `PTN nghỉ ngày này${n.lyDo ? ` (${n.lyDo})` : ''}, không đăng ký ca được.`;
+
   function kiemTraDangKyCa(yc, st, nowMs) {
     const cfg = st.caiDat;
     const loi = [];
@@ -126,6 +130,8 @@
     if (b - a < cfg.phutToiThieuCa) loi.push(`Mỗi lần trực tối thiểu ${cfg.phutToiThieuCa / 60} giờ.`);
     if (a % cfg.buocPhut || b % cfg.buocPhut) loi.push(`Giờ chọn theo bước ${cfg.buocPhut} phút.`);
     if (nowMs >= hanDangKyNgay(yc.ngay, cfg)) loi.push(`Đã qua hạn đăng ký ngày này. Ca phải đăng ký trước ${cfg.gioKhoaDangKy} hôm trước.`);
+    const nghi = ngayNghiCua(st, yc.ngay);
+    if (nghi) loi.push(loiNgayNghi(nghi));
 
     const caCuaToi = st.caTruc.filter((c) => c.mssv === yc.mssv && c.ngay === yc.ngay && CA_GIU_CHO.includes(c.trangThai));
     if (caCuaToi.some((c) => giao(a, b, phut(c.tu), phut(c.den)))) loi.push('Bạn đã có ca trùng khung giờ này.');
@@ -301,6 +307,8 @@
     const b = phut(ca.den);
     if (ca.mssv === mssv) loi.push('Đây là ca của bạn.');
     if (nowMs >= mocGio(ca.ngay, ca.tu)) loi.push('Ca này đã bắt đầu.');
+    const nghi = ngayNghiCua(st, ca.ngay);
+    if (nghi) loi.push(loiNgayNghi(nghi));
     const caCuaToi = st.caTruc.filter((c) => c.mssv === mssv && c.ngay === ca.ngay && CA_GIU_CHO.includes(c.trangThai));
     if (caCuaToi.some((c) => giao(a, b, phut(c.tu), phut(c.den)))) loi.push('Bạn đã có ca trùng khung giờ này.');
     const thu = thuCua(ca.ngay);
@@ -648,7 +656,7 @@
      trang: mục menu được mở; tap: dữ liệu được ghi; xoa: dữ liệu được xóa. Admin luôn có mọi quyền.
      Tài khoản cũ chưa được phân quyền giữ đúng phần việc trước đây (QUYEN_MAC_DINH). */
   const QUYEN = [
-    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, thêm ca đột xuất, xem lịch đăng ký', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao'] },
+    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, thêm ca đột xuất, xem lịch đăng ký, khóa ngày PTN nghỉ', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao', 'ngayNghi'], xoa: ['ngayNghi'] },
     { ma: 'tro_ly', nhom: 'Vận hành', ten: 'Danh sách trợ lý: xem hồ sơ, đổi trạng thái, xuất Excel', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'them_tro_ly', nhom: 'Vận hành', ten: 'Thêm trợ lý và cấp mã vào web', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'xoa_tro_ly', nhom: 'Vận hành', ten: 'Xóa trợ lý khỏi danh sách, kèm toàn bộ dữ liệu của trợ lý đó', trang: ['danh-sach'] },
@@ -698,7 +706,7 @@
   return {
     QUYEN, QUYEN_MAC_DINH, quyenCua, coQuyen, duocGhi, boDuLieuTroLy,
     PHUT, GIO, NGAY, CAI_DAT_MAC_DINH, DOT_KIEM_TRA_MAC_DINH, CHECKLIST_MAC_DINH, DANH_MUC_LOI_MAC_DINH, CA_GIU_CHO,
-    phut, hhmm, ngayKey, docNgay, thuCua, mocGio, congNgay, dauTuan, hanDangKyNgay, tuanThu, hocKyHienTai, dotTuyenMo,
+    phut, hhmm, ngayKey, docNgay, thuCua, mocGio, congNgay, dauTuan, hanDangKyNgay, ngayNghiCua, tuanThu, hocKyHienTai, dotTuyenMo,
     soNguoiTrongKhung, kiemTraDangKyCa, loaiHuy, mucChecklist, checklistXong, danhGiaLuot,
     tinhChiSo, trangThaiNeNep, tieuChiXepLoai, goiYDanhGia, diemDanhGiaTB, xepLoaiKy, TIEU_CHI_DANH_GIA,
     kiemTraNhanCa, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,

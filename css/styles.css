@@ -458,3 +458,4 @@ dialog::backdrop { background: rgba(15, 23, 42, .55); }
   * { transition: none !important; }
 }
 .ds-chon-nguoi { max-height: 260px; overflow-y: auto; border: 1px solid var(--vien); border-radius: 10px; padding: 4px; }
+.luoi-form input[type="date"] { min-width: 0; width: 100%; }
