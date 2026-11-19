@@ -154,6 +154,8 @@
   }
 
   function checklistXong(st, luot, ca) {
+    // Lượt quản lý ghi hộ: trợ lý không tick được, nên chỉ thiếu khi quản lý đánh dấu mục chưa đạt.
+    if (luot.ghiHo) return !st.checklistCa.some((c) => c.luotTrucId === luot.id && c.chuaDat);
     return mucChecklist(st, ca).every((m) => {
       if (m.banGiao) return st.banGiao.some((b) => b.luotTrucId === luot.id && b.noiDung.trim());
       return st.checklistCa.some((c) => c.luotTrucId === luot.id && c.mucId === m.id && c.daLam);
@@ -198,8 +200,11 @@
     const tongGio = luot.reduce((s, l) => s + (l.ketThuc - l.batDau) / GIO, 0) + viecTrongKy.reduce((s, t) => s + (t.gioNgoaiCa || 0), 0);
 
     const nenep = st.soNeNep.filter((n) => n.mssv === mssv && trongKy(n.ngay));
+    // Quên bấm: quản lý phải ghi giờ vào hoặc giờ ra hộ. Mỗi lượt tính một lần dù quên cả hai.
     const quenKetThuc = luot.filter((l) => l.ketThucBoi === 'quan_ly').length;
-    const loiNhe = nenep.filter((n) => n.loai === 'loi_nhe').length + (quenKetThuc > cfg.soLanQuenKetThuc ? 1 : 0);
+    const quenBatDau = luot.filter((l) => l.batDauBoi === 'quan_ly').length;
+    const soLanQuen = luot.filter((l) => l.ketThucBoi === 'quan_ly' || l.batDauBoi === 'quan_ly').length;
+    const loiNhe = nenep.filter((n) => n.loai === 'loi_nhe').length + (soLanQuen > cfg.soLanQuenKetThuc ? 1 : 0);
     const loiNang = nenep.filter((n) => n.loai === 'loi_nang').length;
     const anToan = nenep.filter((n) => n.loai === 'an_toan').length;
     const diemTot = nenep.filter((n) => n.loai === 'diem_tot').length;
@@ -208,7 +213,7 @@
 
     return {
       caDaDangKy, caVangCoPhep, caHuyTruoc, caPTNHuy, caTinh, caTrucDu, caCoDen, caDenDungGio,
-      caVangKhongBao, soLanHuyMuon, soCaBo, tongGio, quenKetThuc,
+      caVangKhongBao, soLanHuyMuon, soCaBo, tongGio, quenKetThuc, quenBatDau, soLanQuen,
       loiNhe, loiNang, anToan, diemTot, diemCongDong, loiNheConLai,
       tyLeThamGia: caTinh > 0 ? (caTrucDu / caTinh) * 100 : null,
       tyLeDungGio: caCoDen > 0 ? (caDenDungGio / caCoDen) * 100 : null
@@ -298,6 +303,28 @@
     if (!daTapHuan || !datThuViec || matTuCach) return 'Chưa đủ điều kiện';
     const dat = tieuChiXepLoai(cs, cfg, tb).filter((x) => x.tieuChi.every((t) => t.dat));
     return dat.length ? dat[dat.length - 1].loai : 'Chưa đạt';
+  }
+
+  /* ---------- Báo quên bấm: trợ lý tự khai giờ vào, ra sau khi ca hết ---------- */
+  const NGAY_BAO_QUEN = 7;
+  function kiemTraBaoQuenBam(yc, st, nowMs) {
+    const kq = (loi, them = {}) => ({ loi, ...them });
+    const ca = st.caTruc.find((c) => c.id === yc.caTrucId);
+    if (!ca || ca.mssv !== yc.mssv || ca.trangThai !== 'da_dang_ky') return kq('Không báo quên bấm được cho ca này.');
+    if (nowMs <= mocGio(ca.ngay, ca.den)) return kq('Ca chưa kết thúc. Bấm Bắt đầu hoặc Kết thúc trực ở trang Ca hôm nay.');
+    if (nowMs > mocGio(congNgay(ca.ngay, NGAY_BAO_QUEN + 1), '00:00')) return kq(`Chỉ báo quên bấm trong ${NGAY_BAO_QUEN} ngày sau ca. Liên hệ quản lý.`);
+    if ((st.baoQuenBam || []).some((b) => b.caTrucId === ca.id && b.trangThai !== 'tu_choi')) return kq('Ca này đã có báo quên bấm.');
+    if (!String(yc.lyDo || '').trim()) return kq('Ghi lý do quên bấm.');
+    const luot = (st.luotTruc || []).find((l) => l.caTrucId === ca.id);
+    if (luot && luot.ketThuc) return kq('Ca này đã có đủ giờ vào và giờ ra.');
+    const ra = mocGio(ca.ngay, yc.gioRa || '');
+    if (!/^\d\d:\d\d$/.test(yc.gioRa || '') || ra > nowMs) return kq('Giờ ra không hợp lệ.');
+    if (luot) {
+      if (ra <= luot.batDau) return kq('Giờ ra phải sau giờ vào đã bấm.');
+      return kq(null, { ca, luot, loai: 'ra' });
+    }
+    if (!/^\d\d:\d\d$/.test(yc.gioVao || '') || mocGio(ca.ngay, yc.gioVao) >= ra) return kq('Giờ vào phải trước giờ ra.');
+    return kq(null, { ca, luot: null, loai: 'vao_ra' });
   }
 
   /* ---------- Đổi ca (mục 3.2) ---------- */
@@ -408,6 +435,9 @@
     st.caTruc.filter((c) => c.mssv === mssv && c.trangThai === 'da_dang_ky').forEach((c) => {
       const con = mocGio(c.ngay, c.tu) - nowMs;
       if (con > 0 && con <= GIO) nhac.push(`Ca ${c.tu}–${c.den} bắt đầu trong vòng 1 giờ.`);
+      const luot = st.luotTruc.find((l) => l.caTrucId === c.id);
+      if (!luot && con <= -cfg.phutDungGio * PHUT && nowMs <= mocGio(c.ngay, c.den)) nhac.push(`Ca ${c.tu}–${c.den} đã bắt đầu mà bạn chưa bấm Bắt đầu trực.`);
+      if (luot && !luot.ketThuc && nowMs > mocGio(c.ngay, c.den)) nhac.push(`Ca ${c.tu}–${c.den} đã hết giờ. Nhớ bấm Kết thúc trực.`);
     });
     const tuanSau = congNgay(dauTuan(ngayKey(new Date(nowMs))), 7);
     const conHan = hanDangKyNgay(tuanSau, cfg) - nowMs;
@@ -656,7 +686,7 @@
      trang: mục menu được mở; tap: dữ liệu được ghi; xoa: dữ liệu được xóa. Admin luôn có mọi quyền.
      Tài khoản cũ chưa được phân quyền giữ đúng phần việc trước đây (QUYEN_MAC_DINH). */
   const QUYEN = [
-    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, thêm ca đột xuất, xem lịch đăng ký, khóa ngày PTN nghỉ', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao', 'ngayNghi'], xoa: ['ngayNghi'] },
+    { ma: 'ca_truc', nhom: 'Vận hành', ten: 'Bảng ca: theo dõi, duyệt giờ trực, ghi vắng, thêm ca đột xuất, xem lịch đăng ký, khóa ngày PTN nghỉ', trang: ['bang-ca', 'lich-dang-ky'], tap: ['caTruc', 'luotTruc', 'checklistCa', 'banGiao', 'ngayNghi', 'baoQuenBam'], xoa: ['ngayNghi'] },
     { ma: 'tro_ly', nhom: 'Vận hành', ten: 'Danh sách trợ lý: xem hồ sơ, đổi trạng thái, xuất Excel', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'them_tro_ly', nhom: 'Vận hành', ten: 'Thêm trợ lý và cấp mã vào web', trang: ['danh-sach'], tap: ['troLy'] },
     { ma: 'xoa_tro_ly', nhom: 'Vận hành', ten: 'Xóa trợ lý khỏi danh sách, kèm toàn bộ dữ liệu của trợ lý đó', trang: ['danh-sach'] },
@@ -688,7 +718,7 @@
   /* Xóa trợ lý: bỏ hồ sơ cùng mọi dữ liệu gắn với MSSV đó; nhật ký giữ lại.
      lay(tap) trả danh sách hiện có; kết quả chỉ gồm các tập có thay đổi. */
   const TAP_CUA_TRO_LY = ['troLy', 'thoiKhoaBieu', 'caTruc', 'luotTruc', 'checklistCa', 'banGiao', 'soNeNep', 'baiLam', 'deXuatMat', 'donVang', 'doiCa',
-    'deNghi', 'thamGiaViec', 'danhGia', 'xepLoaiKy', 'caiSai', 'daDocTaiLieu', 'xacNhanNoiQuy', 'thamGiaBuoi'];
+    'deNghi', 'thamGiaViec', 'danhGia', 'xepLoaiKy', 'caiSai', 'daDocTaiLieu', 'xacNhanNoiQuy', 'thamGiaBuoi', 'baoQuenBam'];
   function boDuLieuTroLy(lay, mssv) {
     const caIds = new Set((lay('caTruc') || []).filter((c) => c.mssv === mssv).map((c) => c.id));
     const luotIds = new Set((lay('luotTruc') || []).filter((l) => l.mssv === mssv || caIds.has(l.caTrucId)).map((l) => l.id));
@@ -709,7 +739,7 @@
     phut, hhmm, ngayKey, docNgay, thuCua, mocGio, congNgay, dauTuan, hanDangKyNgay, ngayNghiCua, tuanThu, hocKyHienTai, dotTuyenMo,
     soNguoiTrongKhung, kiemTraDangKyCa, loaiHuy, mucChecklist, checklistXong, danhGiaLuot,
     tinhChiSo, trangThaiNeNep, tieuChiXepLoai, goiYDanhGia, diemDanhGiaTB, xepLoaiKy, TIEU_CHI_DANH_GIA,
-    kiemTraNhanCa, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,
+    kiemTraNhanCa, kiemTraBaoQuenBam, NGAY_BAO_QUEN, kiemTraDangKyViec, nguoiChoKeTiep, soDaChot, gioNgoaiCa, diemDotXuat, chuyenViecGiao, diemViecGiao, thongKeViec, nhacTuDong, gioTheoTuan,
     xao, laCauUuTien, sinhDe, chamTN, chamTuLuan, ketLuanBai, baiHieuLuc, docNganHang,
     NGAN_HANG_TRONG, themFileNganHang, xoaFileNganHang, thongKeNganHang, canhBaoDuDe, kiemTraCauHoi, kiemTraTuLuan,
     taoMaKichHoat, timTheoMa, daXacNhanNoiQuy, loTrinhTuyen, kiemTraDangKyBuoi, kiemTraVaoKhaoSat, duocOnLuyen

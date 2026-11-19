@@ -8,7 +8,7 @@
     banGiao: ['id'], soNeNep: ['id'], baiLam: ['id'], deXuatMat: ['id'], dangKyNhanTin: ['id'], nhatKy: ['id'], donVang: ['id'], doiCa: ['id'],
     deNghi: ['id'], thongBao: ['id'], viec: ['id'], thamGiaViec: ['id'], danhGia: ['mssv', 'hocKyId'], xepLoaiKy: ['mssv', 'hocKyId'],
     taiKhoan: ['id'], hocKy: ['id'], dotTuyen: ['id'], dotKiemTra: ['id'],
-    taiLieu: ['id'], noiQuy: ['id'], daDocTaiLieu: ['mssv', 'taiLieuId'], xacNhanNoiQuy: ['mssv', 'phienBan'], buoiKhaoSat: ['id'], thamGiaBuoi: ['buoiId', 'mssv'], ngayNghi: ['ngay']
+    taiLieu: ['id'], noiQuy: ['id'], daDocTaiLieu: ['mssv', 'taiLieuId'], xacNhanNoiQuy: ['mssv', 'phienBan'], buoiKhaoSat: ['id'], thamGiaBuoi: ['buoiId', 'mssv'], ngayNghi: ['ngay'], baoQuenBam: ['id']
   };
   const KHOA_CHUNG = ['caiDat', 'danhMucLoi'];
   const GIAY_THU_LAI = 15;

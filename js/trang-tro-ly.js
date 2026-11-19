@@ -1,7 +1,7 @@
 /* Phần trợ lý: đăng ký, thông tin, ca hôm nay, lịch trực, tiến độ (mục 8). */
 (function () {
   const L = window.Logic;
-  const { esc, ngay, ngayDu, gio, ngayGio, so, tyLe, nhan, xacNhan, thongBao } = window.UI;
+  const { esc, ngay, ngayDu, gio, ngayGio, so, tyLe, nhan, xacNhan, thongBao, moHop } = window.UI;
   const toi = () => Store.troLy(Store.phien.mssv);
   const homNay = () => L.ngayKey(new Date(Store.now()));
 
@@ -209,6 +209,17 @@
       </section>`;
   }
 
+  // Trạng thái báo quên bấm của một ca, hoặc nút để báo khi ca đã hết mà thiếu giờ.
+  const baoCua = (ca) => Store.state.baoQuenBam.filter((b) => b.caTrucId === ca.id).sort((a, b) => b.luc - a.luc)[0] || null;
+  function khoiBaoQuen(ca, nhanNut) {
+    const b = baoCua(ca);
+    if (b?.trangThai === 'cho_duyet') return `<p class="phu"><span class="nhan nhan-vang">Đã báo quên bấm</span> ${b.gioVao ? `vào ${b.gioVao}, ` : ''}ra ${b.gioRa}. Chờ quản lý duyệt.</p>`;
+    if (b?.trangThai === 'da_duyet') return '<p class="phu"><span class="nhan nhan-luc">Báo quên bấm đã được duyệt</span></p>';
+    const biTuChoi = b?.trangThai === 'tu_choi' ? `<p class="loi">Báo quên bấm bị từ chối${b.lyDoTuChoi ? `: ${esc(b.lyDoTuChoi)}` : ''}.</p>` : '';
+    if (Store.now() > L.mocGio(L.congNgay(ca.ngay, L.NGAY_BAO_QUEN + 1), '00:00')) return biTuChoi;
+    return `${biTuChoi}<button type="button" class="nut nut-phu" data-act="bao-quen-bam" data-id="${esc(ca.id)}">${nhanNut}</button>`;
+  }
+
   function theCa(ca) {
     const now = Store.now();
     const cfg = Store.state.caiDat;
@@ -226,9 +237,9 @@
       return `
         <section class="the">
           ${dau}${nhan(UI.TRANG_THAI_CA, ca.trangThai)}</div>
-          <p class="phu">${chuaToi ? `Bấm được từ ${gio(moLuc)}.` : daQua ? 'Ca đã kết thúc mà chưa bấm Bắt đầu. Liên hệ quản lý.' : 'Chỉ bấm khi bạn đã có mặt ở PTN.'}</p>
+          <p class="phu">${chuaToi ? `Bấm được từ ${gio(moLuc)}.` : daQua ? 'Ca đã kết thúc mà bạn chưa bấm Bắt đầu. Nếu bạn có trực, báo quên bấm để quản lý duyệt giờ.' : 'Chỉ bấm khi bạn đã có mặt ở PTN.'}</p>
           ${tre ? `<p class="loi">Bạn đang trễ ${phutTre} phút so với giờ ca. Vẫn bấm được; giờ trực tính từ lúc bấm và ca ghi nhận đi trễ.</p>` : ''}
-          <button type="button" class="nut nut-lon" data-act="bat-dau-truc" data-id="${esc(ca.id)}"${chuaToi || daQua ? ' disabled' : ''}>Bắt đầu trực</button>
+          ${daQua ? khoiBaoQuen(ca, 'Báo quên bấm: khai giờ vào, giờ ra') : `<button type="button" class="nut nut-lon" data-act="bat-dau-truc" data-id="${esc(ca.id)}"${chuaToi ? ' disabled' : ''}>Bắt đầu trực</button>`}
         </section>`;
     }
     if (!luot.ketThuc) {
@@ -236,7 +247,9 @@
         <section class="the">
           ${dau}<span class="nhan nhan-luc">Đang trực từ ${gio(luot.batDau)}</span></div>
           ${luot.batDau - L.mocGio(ca.ngay, ca.tu) > cfg.phutDungGio * L.PHUT ? `<p class="loi">Vào trễ ${Math.floor((luot.batDau - L.mocGio(ca.ngay, ca.tu)) / L.PHUT)} phút. Giờ trực tính từ ${gio(luot.batDau)}.</p>` : ''}
+          ${hetLuc < now ? `<p class="loi">Ca đã hết giờ. Bấm Kết thúc bây giờ thì giờ ra là ${gio(now)}. Nếu bạn đã về từ trước, báo giờ ra thực tế.</p>` : ''}
           <button type="button" class="nut nut-lon nut-xanh" data-act="ket-thuc-truc" data-id="${esc(luot.id)}">Kết thúc trực</button>
+          ${hetLuc < now ? khoiBaoQuen(ca, 'Báo giờ ra thực tế') : ''}
         </section>
         ${theChecklist(ca, luot)}`;
     }
@@ -263,12 +276,60 @@
         <p class="phu">${ngay(hn)} · ${gio(Store.now())}</p>
         ${bg ? `<section class="the the-nhat"><h2>Bàn giao ca trước</h2><p>${esc(bg)}</p></section>` : ''}
         ${dangCo.map(theCa).join('')}
+        ${theCaTruocThieuGio(t)}
         ${dangCo.length ? '' : `<section class="the trong">
           <h2>Hôm nay bạn không có ca</h2>
           ${keTiep ? `<p class="phu">Ca kế tiếp: ${ngay(keTiep.ngay)}, ${keTiep.tu}–${keTiep.den}.</p>
             <button type="button" class="nut nut-phu" data-act="tua-den-ca" data-ms="${L.mocGio(keTiep.ngay, keTiep.tu)}">Bản demo: tua đồng hồ đến ca này</button>` : '<p class="phu">Vào Đăng ký lịch trực để chọn khung giờ.</p>'}
         </section>`}`;
     }
+  };
+
+  // Ca những ngày trước còn thiếu giờ vào hoặc giờ ra, trong hạn báo quên bấm.
+  function theCaTruocThieuGio(t) {
+    const hn = homNay();
+    const tu = L.congNgay(hn, -L.NGAY_BAO_QUEN);
+    const ds = Store.state.caTruc
+      .filter((c) => c.mssv === t.mssv && c.trangThai === 'da_dang_ky' && c.ngay < hn && c.ngay >= tu)
+      .filter((c) => { const l = luotCuaCa(c.id); return !l || !l.ketThuc; })
+      .sort((a, b) => a.ngay.localeCompare(b.ngay));
+    if (!ds.length) return '';
+    return `<section class="the">
+      <h2>Ca trước còn thiếu giờ</h2>
+      <p class="phu">Các ca dưới đây thiếu giờ vào hoặc giờ ra. Báo trong ${L.NGAY_BAO_QUEN} ngày sau ca để quản lý duyệt giờ.</p>
+      <ul class="ds-gon">${ds.map((c) => `<li><span><strong>${ngay(c.ngay)}</strong> ${c.tu}–${c.den}</span><span>${khoiBaoQuen(c, luotCuaCa(c.id) ? 'Báo giờ ra' : 'Báo quên bấm')}</span></li>`).join('')}</ul>
+    </section>`;
+  }
+
+  App.act['bao-quen-bam'] = (el) => {
+    const ca = Store.state.caTruc.find((c) => c.id === el.dataset.id);
+    const luot = luotCuaCa(ca.id);
+    moHop('Báo quên bấm', `
+      <p class="phu">${ngay(ca.ngay)}, ca ${ca.tu}–${ca.den}.${luot ? ` Bạn đã bấm vào lúc ${gio(luot.batDau)}.` : ''} Khai đúng giờ thực tế; quản lý sẽ đối chiếu. Mỗi lần báo tính một lần quên bấm.</p>
+      <form data-form="bao-quen-bam" data-id="${esc(ca.id)}">
+        <div class="luoi-form">
+          ${luot ? '' : `<label>Giờ vào <input type="time" name="gioVao" value="${ca.tu}" required /></label>`}
+          <label>Giờ ra <input type="time" name="gioRa" value="${ca.den}" required /></label>
+        </div>
+        <label>Lý do, người làm chứng nếu có <input name="lyDo" required placeholder="VD: Quên bấm, trực cùng bạn Minh Anh" /></label>
+        <p id="loi-bao-quen" class="loi" role="alert" hidden></p>
+        <div class="hang-nut canh-phai"><button class="nut">Gửi quản lý</button></div>
+      </form>`);
+  };
+
+  App.form['bao-quen-bam'] = (f, el) => {
+    const t = toi();
+    const yc = { mssv: t.mssv, caTrucId: el.dataset.id, gioVao: f.gioVao, gioRa: f.gioRa, lyDo: f.lyDo };
+    const kq = L.kiemTraBaoQuenBam(yc, Store.state, Store.now());
+    if (kq.loi) {
+      const p = document.getElementById('loi-bao-quen');
+      p.hidden = false;
+      p.textContent = kq.loi;
+      return;
+    }
+    Store.state.baoQuenBam.push({ id: Store.id('bq'), mssv: t.mssv, caTrucId: yc.caTrucId, loai: kq.loai, gioVao: kq.loai === 'vao_ra' ? f.gioVao : null, gioRa: f.gioRa,
+      lyDo: f.lyDo.trim(), trangThai: 'cho_duyet', nguoiDuyet: null, luc: Store.now() });
+    App.xong('Đã gửi. Chờ quản lý duyệt.');
   };
 
   App.act['tua-den-ca'] = (el) => {

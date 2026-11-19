@@ -62,7 +62,7 @@
 
   function viecCanLam(t) {
     const st = Store.state;
-    const ds = L.nhacTuDong(st, t.mssv, Store.now()).map((noiDung) => ({ noiDung, trang: 'thong-bao', icon: 'chuong' }));
+    const ds = L.nhacTuDong(st, t.mssv, Store.now()).map((noiDung) => ({ noiDung, trang: /bấm (Bắt đầu|Kết thúc) trực/.test(noiDung) ? 'ca-hom-nay' : 'thong-bao', icon: 'chuong' }));
     const moiGiao = st.thamGiaViec.filter((x) => x.mssv === t.mssv && x.trangThai === 'da_giao').length;
     if (moiGiao) ds.push({ noiDung: `${moiGiao} việc mới được giao`, trang: 'viec-cua-toi', icon: 'viec' });
     const chuaDoc = st.thongBao.filter((b) => b.nguoiNhan.includes(t.mssv) && !b.daDoc.includes(t.mssv)).length;

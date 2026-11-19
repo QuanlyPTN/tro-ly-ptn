@@ -161,7 +161,7 @@
     ['phutDungGio', 'Đúng giờ: trễ tối đa (phút)'],
     ['phutTreToiDa', 'Trực đủ: trễ tối đa (phút)'],
     ['phutRaSomToiDa', 'Trực đủ: ra sớm tối đa (phút)'],
-    ['soLanQuenKetThuc', 'Quên Kết thúc trực: số lần cho phép/kỳ'],
+    ['soLanQuenKetThuc', 'Quên bấm Bắt đầu hoặc Kết thúc trực: số lần cho phép/kỳ'],
     ['gioToiThieu', 'Giờ tối thiểu mỗi kỳ'],
     ['gioXuatSac', 'Giờ loại Xuất sắc (chờ chốt)'],
     ['soCaTinhToiThieu', 'Số ca tính để bật mốc tỷ lệ'],
